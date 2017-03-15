@@ -1,0 +1,46 @@
+\documentclass[french,a4paper]{article}
+\usepackage{microtype}
+\usepackage{polyglossia}
+\usepackage{geometry}
+\setmainfont{Tribun ADF Std}
+\begin{document}
+
+\section{Graphe ``temporel'' / d'activation}
+On définit le graphe dirigé acyclique $G_a=(V_a,E_a)$.
+\begin{itemize}
+    \item $V_a$ : points d'interaction.
+    \item $E_a$ : écoulement entre les points (contraintes temporelles).
+\end{itemize}
+
+\section{Graphe hiérarchique}
+Graphe de dépendances de données : une fonction a besoin de l'exécution d'une fonction précédente.
+
+Optimisation : passer directement les valeurs. Mais en attendant, on fait du f1 -> store et read -> f2.
+
+\section{Connection entre nœuds}
+\begin{itemize}
+\item Cas 1 : "optimiste" : on essaye de toujours envoyer les données
+\item Cas 2 : "pessimiste" : on n'envoie les données que lorsque tous les nœuds du graphe sont actifs
+\item Cas 3 : "retard" : les données sont bufferisées pour envoyer lorsqu'un objet subséquent devient actif. 
+Note : que se passe-t-il si on a plusieurs utilisateurs subséquents ?
+ Est-ce qu'on reprend du début à chaque fois (le pointeur est dans l'objet situé au bout de l'arête), ou de là ou on s'est arrêté de lire (le pointeur est dans l'objet situé à l'origine de l'arête).
+\item Cas 4 : envoyer en parallèle ?
+\item Cas 5 : ce qu'il y a actuellement : les nœuds suivants remplacent les résultats des noeuds précédents.
+\end{itemize}
+
+Pour pouvoir avoir les différents types de connections dans un seul scénario, il faut avoir moyen de définir des ensembles de processus qui vont pouvoir être liés entre eux.
+
+Dans un groupe on peut définir : 
+\begin{itemize}
+    \item Une politique.
+    \item Des liens qui manifestent la volonté de l'utilisateur.
+\end{itemize}
+
+Cas ou on a une variable interne au système : on est toujours soit dans le case 2 ou 3.
+
+Cas ou l'utilisateur doit spécifier explicitement les relations de données : 3, 5
+
+Spécification des sous-graphes
+
+Définir l'interface utilisateur
+\end{document}
