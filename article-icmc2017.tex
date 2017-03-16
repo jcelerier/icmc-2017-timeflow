@@ -1,0 +1,52 @@
+\documentclass[a4paper,twocolumns]{article}
+\usepackage{microtype}
+\usepackage{polyglossia}
+\usepackage{geometry}
+\setmainfont{Tribun ADF Std}
+
+\title{Temporal dataflow graphs and their application to generative music}
+
+\begin{document}
+	\maketitle
+	
+	\section{Introduction}
+	\section{Presentation}
+	\subsection{Graph definitions}
+	\subsubsection{Why multiple graphs ?}
+	\subsubsection{Hierarchy}
+	
+	\subsection{Inner data and outer data}
+	Inner data : reduces the possibilities
+	
+	Outer data : have to care about overwriting
+	
+	\subsection{Connection types}
+	\subsubsection{Opportunistic}
+	An execution of a sub-graph can happen whenever any of the nodes of a sub-graph are executing. 
+	An order has to be provided.
+	\subsubsection{Pessimistic}
+	An execution of a sub-graph can only happen when all the nodes of the sub-graph are executing.
+	\subsubsection{Delayed}
+	A connection between an output and an input is delayed through bufferisation in a queue.
+	
+	The bufferisation can behave in two way :
+	\begin{itemize}
+		\item Readers of the buffer always start from the same point (the beginning of the previous function in the callback chain).
+		\item Readers of the buffer continue from the latest read position.
+		Question : what happens in case of multiple read ?
+	\end{itemize}
+	
+	
+	\subsubsection{Parallelized}
+	All the sub-graphs are run with the same input environment. 
+	The resulting values put in the environment are undefined, but it is guaranteed that all values returned will have been set.
+	
+	\subsubsection{Replaced}
+	All the sub-graphs are run with the same input environment. 
+	The resulting values put in the environment are those of the latest graph execution.
+	
+	\section{Meaning}
+	Divide the time in abstract segmetn according to the activation graph; gives us a set of equations for each variable.
+	\section{Implementation}
+	\section{Examples}
+\end{document}
