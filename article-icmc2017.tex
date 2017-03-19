@@ -16,8 +16,10 @@
     
     For instance, given two processes $p_1, p_2$, what can be said of a program where $p_1$ executes from $t=0$ to $t=5$ seconds, and $p_2$ from $t=3$ to $t=6$ when $p_1$ and $p_2$ operate on the same data.
     
-    The simplest strategy can be to only allow execution when all processes are active and have been given a definite order. 
-    While safe from the point of view of software execution, we believe that other execution policies that leverage information from the temporal layout of processes can provide composers with new creative capabilities.
+    An example would be an audio filter : $p_1$ is a low-pass and $p_2$ a reverb.
+    
+    The simplest strategy can be to only allow execution when all processes are active and have been given a definite order of execution : in this case the processes will only execute from $t=3$ to $t=5$ and behave like function composition. 
+    While safe from the point of view of software execution, we will show that other execution policies leveraging information from the temporal layout of processes can provide composers with new creative capabilities.
     
     
     \subsection{Related works}
