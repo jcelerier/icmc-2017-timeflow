@@ -10,23 +10,70 @@
 	\maketitle
 	
 	\section{Introduction}
-	\section{Presentation}
-	\subsection{Graph definitions}
-	\subsubsection{Why multiple graphs ?}
-	\subsubsection{Hierarchy}
+    This work explores the association of temporal semantics to standard data flow graphs used in music and signal processing.
+    
+    We analyze the meanings that can be given to a graphical representation of processes executing in time. 
+    
+    For instance, given two processes $p_1, p_2$, what can be said of a program where $p_1$ executes from $t=0$ to $t=5$ seconds, and $p_2$ from $t=3$ to $t=6$ when $p_1$ and $p_2$ operate on the same data.
+    
+    The simplest strategy can be to only allow execution when all processes are active and have been given a definite order. 
+    While safe from the point of view of software execution, we believe that other execution policies that leverage information from the temporal layout of processes can provide composers with new creative capabilities.
+    
+    
+    \subsection{Related works}
+    Citer Kyma
+    Céu
+    Perl
+    
+    \subsection{Examples}
+    Video filtering : 
+    For t=0 to t=5 we change the brightness
+    
+    For t=3 to t=6 we change the contrast
+    
+    \subsection{Temporal formalism}
+    Rappel i-score / ossia
+    
+    
+    
+	\section{Graph definitions}
+	\subsection{Why multiple graphs ?}
+	\subsection{Hierarchy}
 	
-	\subsection{Inner data and outer data}
-	Inner data : reduces the possibilities of connection : everything has to be there
+	\section{Inner data and outer data}
+	Inner data : reduces the possibilities of connection : everything has to be there (explicit)
 	
-	Outer data : have to care about overwriting
+	Outer data : have to care about overwriting (implicit)
+    Implicit edges allow for features such as pattern-matching : one node outputs to random, unknown other inputs, or to 
+    the global state.
+    For inputs to handle this, we have to provide them with a "can accept" function.
 	
-	\subsection{Connection types}
-	\subsubsection{Opportunistic}
+    
+    \section{Where to put the relationships}
+    \subsection{In the cables}
+    \subsection{In the ports}
+    \subsection{In the nodes}
+    \subsection{In the addresses}
+    No temporal behaviour possible
+    \subsection{Global behaviour}
+    No temporal behaviour possible
+    \subsection{Overall resolution}
+    Unspecified by default. 
+    
+    Hierarchical : cable, port, node, address, global.
+   
+    Default global behaviour : glutton.
+   
+	\section{Relationships}
+    \subsection{Strict}
+    An execution of a sub-graph can only happen when all the nodes of the sub-graph are executing.
+    
+	\subsection{Glutton}
 	An execution of a sub-graph can happen whenever any of the nodes of a sub-graph are executing. 
 	An order has to be provided.
-	\subsubsection{Pessimistic}
-	An execution of a sub-graph can only happen when all the nodes of the sub-graph are executing.
-	\subsubsection{Delayed}
+    
+    
+	\subsection{Delayed}
 	A connection between an output and an input is delayed through bufferisation in a queue.
 	
 	The bufferisation can behave in two way :
@@ -37,16 +84,35 @@
 	\end{itemize}
 	
 	
-	\subsubsection{Parallelized}
+	\subsection{Parallelized}
 	All the sub-graphs are run with the same input environment. 
 	The resulting values put in the environment are undefined, but it is guaranteed that all values returned will have been set.
 	
-	\subsubsection{Replaced}
+    For audio or video streams however, a meaningful behaviour would be to mix all the outputs together.
+     
+	\subsection{Replaced}
 	All the sub-graphs are run with the same input environment. 
 	The resulting values put in the environment are those of the latest graph execution.
 	
+    \section{Default behaviours for orders}
+    The temporal graph allows to bypass a bit of cable writing.
+    
+    \subsection{Manual}
+    The user explicitely draws a cable.
+    
+    \subsection{Hierarchical}
+    We follow the hierarchical organization of the temporal graph.
+    
+    
+    \subsection{Temporal glutton}
+    If no order is given for the glutton case, the temporal order in which objects are executed
+    will become the order of chaining in the call graph.
+    
 	\section{Meaning}
-	Divide the time in abstract segmetn according to the activation graph; gives us a set of equations for each variable.
+	Divide the time in abstract segment according to the activation graph; gives us a set of equations for each variable.
 	\section{Implementation}
-	\section{Examples}
+    \section{Conclusion}
+    Additional consideration : see PLOP 2006 article (multi-stream, etc), sample accuracy, etc
+    
+    Explicit cables : optimization.
 \end{document}
