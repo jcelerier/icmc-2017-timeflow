@@ -7,6 +7,8 @@
 \usepackage{microtype}
 \usepackage{polyglossia}
 %\usepackage{geometry}
+\usepackage{tikz}
+\usepackage{listings}
 
 \def\papertitle{Paper Template for ICMC 2017}
 \def\firstauthor{First Author}
@@ -110,24 +112,100 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
 
 	%\subsection{Why multiple graphs ?}
 	%\subsection{Hierarchy}
+    
+    Throughout this paper, we will use the execution trace in fig.~\ref{fig.simple} as running example. 
+    \begin{figure}
+        \centering
+        \begin{tikzpicture}[scale=0.5]
+        \draw[line width=2pt] (0, 0) -- (0, 2) -- (5, 2) -- (5, 0) -- (0, 0);
+        \draw[line width=2pt] (0 + 3, 0 - 2.5) -- (0 + 3, 2 - 2.5) -- (5 + 3, 2 - 2.5) -- (5 + 3, 0 - 2.5) -- (0 + 3, 0 - 2.5);
+        
+        \draw[line width=2pt] 
+        (0, -3.75) -- 
+        (0, -4) -- (3, -4) -- 
+        (3, -3.75) --
+        (3, -4) -- (5, -4) -- 
+        (5, -3.75) -- 
+        (5, -4) -- (8, -4) -- 
+        (8, -3.75);
+        
+        \node (t1) at (1.45, -3.45) {\large $t_1$};
+        \node (t2) at (4, -3.45) {\large $t_2$};
+        \node (t3) at (6.5, -3.45) {\large $t_3$};
+        
+        \node (f1) at (2.5, 1) {\large $f_1$} ;
+        \node (f2) at (5.5, -1.5) {\large $f_2$} ;
+        \end{tikzpicture}
+        \caption{A possible trace of execution for two processes}
+        \label{fig.simple}
+    \end{figure}
 	
-	\section{Implicit and explicit connections}
-	Inner data : reduces the possibilities of connection : everything has to be there (explicit)
+	\section{Environment, implicit and explicit connections}
+    In the traditional data flow paradigm, nodes are linked together through connections in their respective input and output ports.
+    
+    We extend this with a permanent environment, that contains a mapping of key-value pairs. 
+    Keys are adresses : \lstinline|/foo/bar| and values can be any kind of data : numbers, strings, etc. 
+    The values of the environment may vary independently of the execution of the program : for instance elements of the environment could be changed through the network, graphical or physical controls.
+    
+    We then have to provide a mean to use the values of this environment to the dataflow graph.
+    Thus, we extend the inputs and outputs ports with the following expliciteness semantic : 
+    
+    \begin{itemize}
+        \item An explicit port has been connected by the developer to another port.
+        \item An implicit port has not been connected to another port but may accept any number of adress - value pairs from the environment to perform its work.
+    \end{itemize}
+    
+    During a tick, adresses have access to two sets of values : 
+    \begin{itemize}
+        \item The values that were in the environment at the beginning of the tick.
+        \item The values produced by previous nodes in the graph.
+    \end{itemize}
+
+    It is up to the developer of nodes of the graph to choose whether a port can only work when connected explicitely, or with the environment produced from previous nodes, or with the global environment, or both.
+
+    This mechanism allows for new patterns during the creation of a dataflow program : for instance, instead of accepting data from a single source, a port could specify a pattern (see OSC 1.1 paper with XPath) such as : \lstinline|/foo.*/bar/b[a-zA-Z]|. 
+    % TODO pattern-matched addresses on the output : seems hard ? how to match it with a "pattern-matched" input port ??
+	%Inner data : reduces the possibilities of connection : everything has to be there (explicit)
 	
-	Outer data : have to care about overwriting (implicit)
-    Implicit edges allow for features such as pattern-matching : one node outputs to random, unknown other inputs, or to 
-    the global state.
-    For inputs to handle this, we have to provide them with a "can accept" function.
+	%Outer data : have to care about overwriting (implicit)
+    %Implicit edges allow for features such as pattern-matching : one node outputs to random, unknown other inputs, or to the global state.
+    % For inputs to handle this, we have to provide them with a "can accept" function.
 	
     
+    % TODO sample-precision of the activation / deactivation of a process / node
+    % TODO 
 	\section{Relationships}
+    We are interested in the relationships between nodes of the dataflow graph when they produce compatible tokens.
+     
     \subsection{Strict}
     An execution of a sub-graph can only happen when all the nodes of the sub-graph are executing.
     
+    That is, if two nodes are compatible, the output of the first node can only go in the input of the second node when both are active.
+    
+    For instance, take the case in fig.~\ref{fig.simple} where $f_1$ and $f_2$ both read from $/a$ and write to $/a$.
+    
+    Let $t$ be the time of the tick and $e$ the global environment. We assume that $f_1, f_2$ always have access to this information.
+    
+    We will get the following set of equations representing the behaviour : 
+    \begin{itemize}
+        \item During $t_0$ : $\emptyset$.
+        \item During $t_1$ : $f_2 \circ f_1 $ or $f_1 \circ f_2$.
+        \item During $t_2$ : $\emptyset$. 
+    \end{itemize}
+
+    The strict execution may happen explicitely or implicitely.
+    
 	\subsection{Glutton}
 	An execution of a sub-graph can happen whenever any of the nodes of a sub-graph are executing. 
-	An order has to be provided.
     
+    If we take the same case than previously, the behaviour is :
+    \begin{itemize}
+        \item $t_0$ : $f_1$.
+        \item $t_1$ : $f_2 \circ f_1$ or $f_1 \circ f_2$.
+        \item $t_2$ : $f_2$. 
+    \end{itemize}
+
+    The glutton execution may happen explicitely or implicitely.
     
 	\subsection{Delayed}
 	A connection between an output and an input is delayed through bufferisation in a queue.
@@ -139,17 +217,44 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
 		Question : what happens in case of multiple read ?
 	\end{itemize}
 	
+    Note : this question has an answer in PLOP2006.
+    
+    The delayed execution has be specifieds explicitely for the tokens to be bufferised.
 	
-	\subsection{Parallelized}
+	\subsection{Parallelized and mixed}
 	All the sub-graphs are run with the same input environment. 
-	The resulting values put in the environment are undefined, but it is guaranteed that all values returned will have been set.
-	
+	The resulting values put in the environment are undefined, but it is guaranteed that all values returned will have been set, which may trigger event handlers.
+    
     For audio or video streams however, a meaningful behaviour would be to mix all the outputs together.
+    
+    Thus, we have to define summing operations for each of the data types supported.
+    
+    We propose for instance : 
+    \begin{itemize}
+        \item For simple parameters such as MIDI control changes or OSC messages : the latest value replaces the previous ones.
+        \item For audio streams : the streams are mixed together.
+        \item For MIDI notes : the notes are played together.
+    \end{itemize}
+
+    The parallelized execution may happen explicitely or implicitely.
+
+    \begin{itemize}
+        \item $t_0$ : $f_1$.
+        \item $t_1$ : $f_1$ and $f_2$ run in parallel, with the same value for $/a$.
+        \item $t_2$ : $f_2$. 
+    \end{itemize}
      
 	\subsection{Replaced}
-	All the sub-graphs are run with the same input environment. 
+	All the nodes are run with the same input environment. 
 	The resulting values put in the environment are those of the latest graph execution.
-	
+	 
+    \begin{itemize}
+        \item $t_0$ : $f_1$.
+        \item $t_1$ : $f_1$ or $f_2$.
+        \item $t_2$ : $f_2$. 
+    \end{itemize}
+
+    The replaced execution may happen explicitely or implicitely.
     
     \section{Where to put the relationships}
     \subsection{In the cables}
@@ -182,7 +287,46 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
     If no order is given for the glutton case, the temporal order in which objects are executed
     will become the order of chaining in the call graph.
     
-	\section{Meaning}
+    That is, if the execution happens in the order of the fig.~\ref{fig.simple}, we get the following execution : 
+    
+    \begin{itemize}
+        \item $t_0$ : $f_1$.
+        \item $t_1$ : $f_2 \circ f_1$.
+        \item $t_2$ : $f_2$. 
+    \end{itemize}
+
+Instead, if we are in the case of fig.~\ref{fig.simple-reversed}, we get for $t_1$ the execution $f_1 \circ f_2$.
+    
+    \begin{figure}
+        \centering
+        \begin{tikzpicture}[scale=0.5]
+        \draw[line width=2pt] (0 + 3, 0) -- (0 + 3, 2) -- (5 + 3, 2) -- (5 + 3, 0) -- (0 + 3, 0);
+        \draw[line width=2pt] (0, 0 - 2.5) -- (0, 2 - 2.5) -- (5, 2 - 2.5) -- (5, 0 - 2.5) -- (0, 0 - 2.5);
+        
+        \draw[line width=2pt] 
+        (0, -3.75) -- 
+        (0, -4) -- (3, -4) -- 
+        (3, -3.75) --
+        (3, -4) -- (5, -4) -- 
+        (5, -3.75) -- 
+        (5, -4) -- (8, -4) -- 
+        (8, -3.75);
+        
+        \node (t1) at (1.45, -3.45) {\large $t_1$};
+        \node (t2) at (4, -3.45) {\large $t_2$};
+        \node (t3) at (6.5, -3.45) {\large $t_3$};
+        
+        \node (f1) at (5.5, 1) {\large $f_1$} ;
+        \node (f2) at (2.5, -1.5) {\large $f_2$} ;
+        \end{tikzpicture}
+        \caption{A possible trace of execution for two processes}
+        \label{fig.simple-reversed}
+    \end{figure}
+
+	\section{Evaluation}
+    We present here the evaluation algorithm that operates at each tick.
+    
+    
 	Divide the time in abstract segment according to the activation graph; gives us a set of equations for each variable.
 	\section{Implementation}
     \section{Conclusion}
