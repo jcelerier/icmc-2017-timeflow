@@ -113,7 +113,7 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
 	%\subsection{Why multiple graphs ?}
 	%\subsection{Hierarchy}
     
-    Throughout this paper, we will use the execution trace in fig.~\ref{fig.simple} as running example. 
+    Throughout this paper, we will use the execution traces in fig.~\ref{fig.simple} and fig.~\ref{fig.simple-reversed} as running example. 
     \begin{figure}
         \centering
         \begin{tikzpicture}[scale=0.5]
@@ -140,6 +140,32 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
         \label{fig.simple}
     \end{figure}
 	
+    \begin{figure}[h]
+        \centering
+        \begin{tikzpicture}[scale=0.5]
+        \draw[line width=2pt] (0 + 3, 0) -- (0 + 3, 2) -- (5 + 3, 2) -- (5 + 3, 0) -- (0 + 3, 0);
+        \draw[line width=2pt] (0, 0 - 2.5) -- (0, 2 - 2.5) -- (5, 2 - 2.5) -- (5, 0 - 2.5) -- (0, 0 - 2.5);
+        
+        \draw[line width=2pt] 
+        (0, -3.75) -- 
+        (0, -4) -- (3, -4) -- 
+        (3, -3.75) --
+        (3, -4) -- (5, -4) -- 
+        (5, -3.75) -- 
+        (5, -4) -- (8, -4) -- 
+        (8, -3.75);
+        
+        \node (t1) at (1.45, -3.45) {\large $t_1$};
+        \node (t2) at (4, -3.45) {\large $t_2$};
+        \node (t3) at (6.5, -3.45) {\large $t_3$};
+        
+        \node (f1) at (5.5, 1) {\large $f_1$} ;
+        \node (f2) at (2.5, -1.5) {\large $f_2$} ;
+        \end{tikzpicture}
+        \caption{Another trace of execution with the same processes}
+        \label{fig.simple-reversed}
+    \end{figure}
+    
 	\section{Environment, implicit and explicit connections}
     In the traditional data flow paradigm, nodes are linked together through connections in their respective input and output ports.
     
@@ -219,7 +245,9 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
 	
     Note : this question has an answer in PLOP2006.
     
-    The delayed execution has be specifieds explicitely for the tokens to be bufferised.
+    The delayed execution has be specified explicitely for the tokens to be bufferised.
+    
+    If we have a delay connection from $f_1$ to $f_2$, the first call to $f_2$ will use the first value that was produced by $f_1$, and nothing before.
 	
 	\subsection{Parallelized and mixed}
 	All the sub-graphs are run with the same input environment. 
@@ -271,20 +299,19 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
     
     Default global behaviour : glutton.
     
-    
-    
+  
     \section{Default behaviours for orders}
-    The temporal graph allows to bypass a bit of cable writing.
+    We study here the various behaviours possible to handle the dependency between nodes of the graph. 
+    We can for instance leverage information provided in the temporal graph to connect the nodes at runtime. 
     
-    \subsection{Manual}
-    The user explicitely draws a cable.
+    \subsection{Manual ordering}
+    The user explicitely draws a cable between two ports.
     
     \subsection{Hierarchical}
-    We follow the hierarchical organization of the temporal graph.
+    We follow the hierarchical organization of the temporal graph~: each time constraint has an ordered list of processes, and each time constraint is itself ordered in the scenario. This gives an order between processes.
     
-    
-    \subsection{Temporal glutton}
-    If no order is given for the glutton case, the temporal order in which objects are executed
+    \subsection{Temporal}
+    If no order is given, the temporal order in which objects are executed
     will become the order of chaining in the call graph.
     
     That is, if the execution happens in the order of the fig.~\ref{fig.simple}, we get the following execution : 
@@ -295,35 +322,9 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
         \item $t_2$ : $f_2$. 
     \end{itemize}
 
-Instead, if we are in the case of fig.~\ref{fig.simple-reversed}, we get for $t_1$ the execution $f_1 \circ f_2$.
+    Instead, if we are in the case of fig.~\ref{fig.simple-reversed}, we get for $t_1$ the execution $f_1 \circ f_2$.
     
-    \begin{figure}
-        \centering
-        \begin{tikzpicture}[scale=0.5]
-        \draw[line width=2pt] (0 + 3, 0) -- (0 + 3, 2) -- (5 + 3, 2) -- (5 + 3, 0) -- (0 + 3, 0);
-        \draw[line width=2pt] (0, 0 - 2.5) -- (0, 2 - 2.5) -- (5, 2 - 2.5) -- (5, 0 - 2.5) -- (0, 0 - 2.5);
-        
-        \draw[line width=2pt] 
-        (0, -3.75) -- 
-        (0, -4) -- (3, -4) -- 
-        (3, -3.75) --
-        (3, -4) -- (5, -4) -- 
-        (5, -3.75) -- 
-        (5, -4) -- (8, -4) -- 
-        (8, -3.75);
-        
-        \node (t1) at (1.45, -3.45) {\large $t_1$};
-        \node (t2) at (4, -3.45) {\large $t_2$};
-        \node (t3) at (6.5, -3.45) {\large $t_3$};
-        
-        \node (f1) at (5.5, 1) {\large $f_1$} ;
-        \node (f2) at (2.5, -1.5) {\large $f_2$} ;
-        \end{tikzpicture}
-        \caption{A possible trace of execution for two processes}
-        \label{fig.simple-reversed}
-    \end{figure}
-
-	\section{Evaluation}
+	\section{Evaluation algorithm}
     We present here the evaluation algorithm that operates at each tick.
     
     
