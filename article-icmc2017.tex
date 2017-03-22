@@ -1,6 +1,7 @@
 \documentclass{article}
 
 \usepackage{icmc2017template}
+\usepackage{amssymb}
 \usepackage{times}
 \usepackage{ifpdf}
 \usepackage{soul}
@@ -14,9 +15,9 @@
 \def\firstauthor{First Author}
 \def\secondauthor{Second Author}
 \def\thirdauthor{Third Author}
-\def\fourthauthor{Fourth Author}
-\def\fifthauthor{Fifth Author}
-\def\sixthauthor{Sixth Author}
+
+
+\lstset{basicstyle=\ttfamily\footnotesize,breaklines=true}
 
 \threeauthors
 {0.5in}
@@ -51,15 +52,18 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
     urlcolor=black
 }
 
-\title{Temporal dataflow graphs and their application to generative music}
+\title{Temporal dataflows and their application to generative music}
 
 \begin{document}
     
     \capstartfalse
     \maketitle
     \capstarttrue
+    \begin{abstract}
+        contenu...
+    \end{abstract}
     
-	\section{Introduction}
+    \section{Introduction}
     This work explores the association of temporal semantics to standard data flow graphs used in music and signal processing.
     
     We analyze the meanings that can be given to a graphical representation of processes executing in time. 
@@ -77,10 +81,12 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
     This allows dynamic routing of the processes according to their temporal order during execution, and extends routing to pattern-matched elements of the environment instead of single values.
     We enumerate four different behaviours regarding the input and output parameters when the nodes are implicitely connected at runtime using the environment: strict, glutton, parallelized, and replaced. 
     Additionnaly, when the node are explicitely connected, we introduce a delay mechanism that allows a computation to happen on data previously produced by another node of the graph.
+    
     \subsection{Related works}
     Citer Kyma
     Céu
     Perl
+    Boolean dataflows (http://pop-art.inrialpes.fr/~fradet/PDFs/RR8333.pdf)
     
     \subsection{Examples}
     
@@ -88,25 +94,41 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
     Rappel i-score / ossia
     
     
-	\section{Graph definitions}
-    We rely on two families of graphs for the execution of the software: 
+    \section{Definitions}
+    We call process an entity that consists in a state, an associated function $f$, any number of inputs and output ports, and an activation status.
+    $f$ has a single argument $t \in \mathbb{R^+}$.
+    The execution of $f$ may read any number of tokens from the inputs and write any number of tokens to the outputs.
+    
+    We rely on two families of graphs for defining the execution of a program:
+    
     \begin{itemize}
-        \item A dataflow graph between processes: processes have input and output ports that can be connected together to enforce data dependencies.
-        \item A temporal graph, based on the OSSIA formalism: $G_t(V_t, E_t)$ where $V_t$ is the set of time nodes and $E_t$ is the set of time constraints in a score.
+        \item Synchronous dataflows between processes: input and output ports can be connected together to enforce data dependencies.
+        \item Temporal graphs, based on the OSSIA formalism: $G_t(V_t, E_t)$ where $V_t$ is the set of time nodes and $E_t$ is the set of time constraints in a score. 
+        For coherency, we call these graphs timeflows.
     \end{itemize}
-    There may be more than a single temporal graph: they can be arranged hierarchically.
+
+    A program consists in the sequential and parallel execution of multiple processes, specified by a single dataflow, and at least one timeflow.
     
-    The execution is driven by a scheduler. 
+    There may be more than a single timeflow: they are defined as processes themselves, which provides them with time information.
+    They have no input or output.
     
-    At each tick, the state of each temporal graph is updated with the following informations: 
+    Each time constraint has an associated set of references to processes.
+    For each process in the dataflow, there is exactly one reference to this process in the set of all timeflows.
+    
+    The execution of a program is synchronous and driven by a scheduler.
+    At each tick, the state of each temporal graph is updated with the following informations:
+    
     \begin{itemize}
-        \item Which processes are currently running.
-        \item For how long these processes have been running.
+        \item Which processes are currently activated.
+        \item For how long these processes have been activated.
     \end{itemize}
 
     This is done according to the various events that occur and may trigger conditions and interaction points present in the temporal score.
     
-    Event-driven vs time-driven vs sound-driven ; each node has a "driver" port which is the time or the sound. (Do like LV2: pass empty buffers). Pb: multi-rate ... voir méthode pour passer de multi-rate à single rate dans PLOP2006 et Signal Flow Graphs and Data Flow Graphs (3.2, 3.3), dans Handbook of Signal Processing (First Edition)
+    Only activated processes may be called in a given tick.
+    
+    % In a given tick, every active process will be executed. ?
+    %Event-driven vs time-driven vs sound-driven ; each node has a "driver" port which is the time or the sound. (Do like LV2: pass empty buffers). Pb: multi-rate ... voir méthode pour passer de multi-rate à single rate dans PLOP2006 et Signal Flow Graphs and Data Flow Graphs (3.2, 3.3), dans Handbook of Signal Processing (First Edition)
     
     % Pour thèse: essayer de spécifier l'ensemble des cas possible / configuraitons d'activation de manière statique à partir d'un scénario donné, même si c'est exponentiel..
 
@@ -117,8 +139,8 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
     \begin{figure}
         \centering
         \begin{tikzpicture}[scale=0.5]
-        \draw[line width=2pt] (0, 0) -- (0, 2) -- (5, 2) -- (5, 0) -- (0, 0);
-        \draw[line width=2pt] (0 + 3, 0 - 2.5) -- (0 + 3, 2 - 2.5) -- (5 + 3, 2 - 2.5) -- (5 + 3, 0 - 2.5) -- (0 + 3, 0 - 2.5);
+        \draw[line width=2pt] (0, 0) rectangle (5, 2);
+        \draw[line width=2pt] (0 + 3, 0 - 2.5) rectangle (5 + 3, 2 - 2.5);
         
         \draw[line width=2pt] 
         (0, -3.75) -- 
@@ -143,9 +165,10 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
     \begin{figure}[h]
         \centering
         \begin{tikzpicture}[scale=0.5]
-        \draw[line width=2pt] (0 + 3, 0) -- (0 + 3, 2) -- (5 + 3, 2) -- (5 + 3, 0) -- (0 + 3, 0);
-        \draw[line width=2pt] (0, 0 - 2.5) -- (0, 2 - 2.5) -- (5, 2 - 2.5) -- (5, 0 - 2.5) -- (0, 0 - 2.5);
         
+        \draw[line width=2pt] (0 + 3, 0) rectangle (5 + 3, 2);
+        \draw[line width=2pt] (0, 0 - 2.5) rectangle (5, 2 - 2.5);
+                
         \draw[line width=2pt] 
         (0, -3.75) -- 
         (0, -4) -- (3, -4) -- 
@@ -166,12 +189,12 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
         \label{fig.simple-reversed}
     \end{figure}
     
-	\section{Environment, implicit and explicit connections}
+    \section{Environment, implicit and explicit connections}
     In the traditional data flow paradigm, nodes are linked together through connections in their respective input and output ports.
     
-    We extend this with a permanent environment, that contains a mapping of key-value pairs. 
-    Keys are adresses: \lstinline|/foo/bar| and values can be any kind of data: numbers, strings, etc. 
-    The values of the environment may vary independently of the execution of the program: for instance elements of the environment could be changed through the network, graphical or physical controls.
+    We extend this with a permanent external environment, that contains a mapping of key-value pairs. 
+    Keys are specified with OSC-like\cite{osc} adresses: \lstinline|/foo/bar| and values can be any kind of data: numbers, strings, etc. 
+    The values of the environment may vary independently of the execution of the program: for instance elements of the environment could be changed asynchronously through the network, graphical widgets or physical controls.
     
     We then have to provide a mean to use the values of this environment to the dataflow graph.
     Thus, we extend the inputs and outputs ports with the following expliciteness semantic: 
