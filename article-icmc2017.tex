@@ -114,7 +114,7 @@ The elements of its syntax are presented in fig.~\ref{fig.iscore-example}.
 \begin{figure}[h]
   \centering
   \includegraphics[width=0.35\textwidth]{images/iscore-example.eps}
-  \caption{Part of an i-score scenario, showcasing the temporal syntax used. 
+  \caption{Part of an OSSIA scenario, showcasing the temporal syntax used. 
     A full horizontal line means that the time must not be interrupted, 
     while a dashed horizontal line means that the time of this time constraint can be interrupted to proceed 
   to the following parts of the score according to an external event.}
@@ -131,7 +131,7 @@ We rely on two families of graphs for defining the execution of a program:
 \begin{itemize}
   \item Synchronous dataflows between processes: input and output ports can be connected together to enforce data dependencies.
   \item Temporal graphs, based on the OSSIA formalism: $G_t(V_t, E_t)$ where $V_t$ is the set of time nodes and $E_t$ is the set of time constraints in a score. 
-        For coherency, we call these graphs timeflows.
+  For coherency, we call these graphs timeflows.
 \end{itemize}
 
 A program consists in the sequential and parallel execution of multiple processes, specified by a single dataflow, and at least one timeflow.
@@ -162,74 +162,92 @@ Only activated processes may be called in a given tick.
 %\subsection{Why multiple graphs ?}
 %\subsection{Hierarchy}
     
-Throughout this paper, we will use the execution traces in fig.~\ref{fig.simple} and fig.~\ref{fig.simple-reversed} as running example. 
+Throughout this paper, we will use the execution traces in fig.~\ref{fig.simple} and fig.~\ref{fig.simple-reversed} as running example, as well as the relationships between $f_1$ and $f_2$ present in fig.~\ref{fig.simple-dataflow}. 
     
 Finally, we will call developers the persons implementing dataflow-based software and users, authors, or composers the persons using dataflow-based software to implement their own music algorithms.
-    
-\begin{figure}
-  \centering
-  \begin{tikzpicture}[scale=0.5]
-    \draw[line width=2pt] (0, 0) rectangle (5, 2);
-    \draw[line width=2pt] (0 + 3, 0 - 2.5) rectangle (5 + 3, 2 - 2.5);
-    		        
-    \draw[line width=2pt] 
-    (0, -3.75) -- 
-    (0, -4) -- (3, -4) -- 
-    (3, -3.75) --
-    (3, -4) -- (5, -4) -- 
-    (5, -3.75) -- 
-    (5, -4) -- (8, -4) -- 
-    (8, -3.75);
-    		        
-    \node (t1) at (1.45, -3.45) {\large $t_0$};
-    \node (t2) at (4, -3.45) {\large $t_1$};
-    \node (t3) at (6.5, -3.45) {\large $t_2$};
-    		        
-    \node (f1) at (2.5, 1) {\large $f_1$} ;
-    \node (f2) at (5.5, -1.5) {\large $f_2$} ;
-  \end{tikzpicture}
-  \caption{A possible trace of execution for two processes}
-  \label{fig.simple}
-\end{figure}
-	
-\begin{figure}
-  \centering
-  \begin{tikzpicture}[scale=0.5]
-    		        
-    \draw[line width=2pt] (0 + 3, 0) rectangle (5 + 3, 2);
-    \draw[line width=2pt] (0, 0 - 2.5) rectangle (5, 2 - 2.5);
-    		                
-    \draw[line width=2pt] 
-    (0, -3.75) -- 
-    (0, -4) -- (3, -4) -- 
-    (3, -3.75) --
-    (3, -4) -- (5, -4) -- 
-    (5, -3.75) -- 
-    (5, -4) -- (8, -4) -- 
-    (8, -3.75);
-    		        
-    \node (t1) at (1.45, -3.45) {\large $t_0$};
-    \node (t2) at (4, -3.45) {\large $t_1$};
-    \node (t3) at (6.5, -3.45) {\large $t_2$};
-    		        
-    \node (f1) at (5.5, 1) {\large $f_1$} ;
-    \node (f2) at (2.5, -1.5) {\large $f_2$} ;
-  \end{tikzpicture}
-  \caption{Another trace of execution with the same processes}
-  \label{fig.simple-reversed}
-\end{figure}
-
 
 \begin{figure}
 	\centering
-	\begin{tikzpicture}[scale=0.5]
-	 \node[draw, circle] (f1) at (0, 0) { $f_1$ };
-	 \node[draw, circle] (f2) at (3, 0) { $f_2$ }
-	    edge [<-] (f1);
-	\end{tikzpicture}
-	\caption{Another trace of execution with the same processes}
-	\label{fig.simple-reversed}
+	\begin{subfigure}{0.16\textwidth}\centering
+		\begin{tikzpicture}[scale=0.5]
+		\node[draw, circle] (f1) at (0, 0) { $f_1$ };
+		\node[draw, circle] (f2) at (3, 0) { $f_2$ }
+		edge [<-] (f1);
+		\end{tikzpicture}\caption{}\label{fig.f1tof2}
+	\end{subfigure}~
+	\begin{subfigure}{0.16\textwidth}\centering	
+		\begin{tikzpicture}[scale=0.5]
+		\node[draw, circle] (f1) at (0, 0) { $f_1$ };
+		\node[draw, circle] (f2) at (3, 0) { $f_2$ }
+		edge [->] (f1);
+		\end{tikzpicture}\caption{}
+	\end{subfigure}~	
+	\begin{subfigure}{0.16\textwidth}\centering
+		\begin{tikzpicture}[scale=0.5]
+		\node[draw, circle] (f1) at (0, 0) { $f_1$ };
+		\node[draw, circle] (f2) at (3, 0) { $f_2$ };
+		\end{tikzpicture}\caption{}
+	\end{subfigure}
+	\caption{Possible dataflows between $f_1$ and $f_2$}
+	\label{fig.simple-dataflow}
 \end{figure}
+
+    \begin{figure}
+    	\centering
+\begin{subfigure}{0.25\textwidth}
+  \centering
+  \begin{tikzpicture}[scale=0.25]
+    \draw[] (0, 0) rectangle (5, 2);
+    \draw[] (0 + 3, 0 - 2.5) rectangle (5 + 3, 2 - 2.5);
+    		        
+    \draw[] 
+    (0, -3.75) -- 
+    (0, -4) -- (3, -4) -- 
+    (3, -3.75) --
+    (3, -4) -- (5, -4) -- 
+    (5, -3.75) -- 
+    (5, -4) -- (8, -4) -- 
+    (8, -3.75);
+    		        
+    \node (t1) at (1.45, -3.45) {\footnotesize $t_0$};
+    \node (t2) at (4, -3.45) {\footnotesize $t_1$};
+    \node (t3) at (6.5, -3.45) {\footnotesize $t_2$};
+    		        
+    \node (f1) at (2.5, 1) {\footnotesize $f_1$} ;
+    \node (f2) at (5.5, -1.5) {\footnotesize $f_2$} ;
+  \end{tikzpicture}
+  \caption{A possible trace of execution for $f_1$ and $f_2$}
+  \label{fig.simple}
+\end{subfigure}~	
+\begin{subfigure}{0.25\textwidth}
+  \centering
+  \begin{tikzpicture}[scale=0.25]
+    		        
+    \draw[] (0 + 3, 0) rectangle (5 + 3, 2);
+    \draw[] (0, 0 - 2.5) rectangle (5, 2 - 2.5);
+    		                
+    \draw[] 
+    (0, -3.75) -- 
+    (0, -4) -- (3, -4) -- 
+    (3, -3.75) --
+    (3, -4) -- (5, -4) -- 
+    (5, -3.75) -- 
+    (5, -4) -- (8, -4) -- 
+    (8, -3.75);
+    		        
+    \node (t1) at (1.45, -3.45) {\footnotesize $t_0$};
+    \node (t2) at (4, -3.45) {\footnotesize $t_1$};
+    \node (t3) at (6.5, -3.45) {\footnotesize $t_2$};
+    		        
+    \node (f1) at (5.5, 1) {\footnotesize $f_1$} ;
+    \node (f2) at (2.5, -1.5) {\footnotesize $f_2$} ;
+  \end{tikzpicture}
+  \caption{Another trace of execution}
+  \label{fig.simple-reversed}
+\end{subfigure}
+\caption{Process activation traces}
+\end{figure}
+
     
 \section{Environment, implicit and explicit connections}
 In the data flow paradigm, nodes are linked together through connections in their respective input and output ports.
@@ -250,27 +268,28 @@ Thus, we extend the inputs and outputs ports with the following expliciteness se
         Every write done by a node is inserted in a sub-environment scoped to the duration of the tick.
 \end{itemize}
     
-During a tick, adresses have access to two sets of values: 
+During a tick, adresses have access to two sets of values, corresponding to scopes: 
 \begin{itemize}
   \item The values that were in the environment at the beginning of the tick.
   \item The values produced by previous implicit output ports in the dataflow.
         Section~\ref{sec.relationships} presents the various policies that nodes can leverage to 
-        use these values.
+        use these values. 
+        These values are committed to the environment at the end of a tick.
 \end{itemize}
 
-Let $\mathrm{ticks}$ be the function that gives the number of ticks in an interval.+
-For a given execution following fig.~\ref{fig.simple}, the evolution of such parameters may look like : 
+For a given execution following fig.~\ref{fig.f1tof2}, the evolution of such parameters would behave as in table~\ref{tbl.evolution}.
 
-
-\begin{table}
+\begin{table}[h]
 	\centering
-	\begin{tabular}{c|ccc}
-		Address & $t_0$ & $t_1$ & $t_2$ \\
+	\footnotesize
+	\begin{tabular}{c|cccc}
+		Address & Before $f_1$ & After $f_1$ & After $f_2$ & Next tick \\
 		\midrule
-		Global \lstinline|/a|  & $x$ & $x $ & \\
-		Local \lstinline|/a|   & $\emptyset$ & & \\	
+		Global \lstinline|/a|  & $a_0$ & $a_0$ & $a_0$ & $f2(f1(a_0))$\\
+		Local \lstinline|/a|   & $\emptyset$ & $f_1(a_0)$ & $f2(f1(a_0))$ & $\emptyset$ \\	
 	\end{tabular}
-	\caption{}
+	\caption{Evolution of a parameter in the global and local scope}
+	\label{tbl.evolution}
 \end{table}
 
 It is up to the implementor of nodes of the graph to choose whether a port can work: 
@@ -394,7 +413,7 @@ where this relationship should be specified.
     
 We study the implication of bearing such annotations for each object in the dataflow.
 
-\subsection{In the cables}
+\subsection{In the cables between ports}
 The most precise way to set-up dependency-related information would be in 
 the cables connecting two ports. 
     
@@ -402,6 +421,9 @@ It is also the only way to set-up a delayed connection.
     
 However, it would also be the most tedious for users if the patch changes often.
     
+\subsection{In the edges between nodes}
+
+
 \subsection{In the ports}
 \subsection{In the nodes}
 \subsection{In the addresses}
