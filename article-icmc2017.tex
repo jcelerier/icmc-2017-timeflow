@@ -91,8 +91,16 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
     \subsection{Examples}
     
     \subsection{Temporal formalism}
-    Rappel i-score / ossia
     
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.45\textwidth]{images/iscore-example.eps}
+        \caption{Part of an i-score scenario, showcasing the temporal syntax used. 
+            A full horizontal line means that the time must not be interrupted, 
+            while a dashed horizontal line means that the time of this time constraint can be interrupted to proceed 
+            to the following parts of the score according to an external event.}
+        \label{fig.iscore-example}
+    \end{figure}
     
     \section{Definitions}
     We call process an entity that consists in a state, an associated function $f$, any number of inputs and output ports, and an activation status.
@@ -136,6 +144,9 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
 	%\subsection{Hierarchy}
     
     Throughout this paper, we will use the execution traces in fig.~\ref{fig.simple} and fig.~\ref{fig.simple-reversed} as running example. 
+    
+    Finally, we will call developers the persons implementing dataflow-based software and users, authors, or composers the persons using dataflow-based software to implement their own music algorithms.
+    
     \begin{figure}
         \centering
         \begin{tikzpicture}[scale=0.5]
@@ -151,9 +162,9 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
         (5, -4) -- (8, -4) -- 
         (8, -3.75);
         
-        \node (t1) at (1.45, -3.45) {\large $t_1$};
-        \node (t2) at (4, -3.45) {\large $t_2$};
-        \node (t3) at (6.5, -3.45) {\large $t_3$};
+        \node (t1) at (1.45, -3.45) {\large $t_0$};
+        \node (t2) at (4, -3.45) {\large $t_1$};
+        \node (t3) at (6.5, -3.45) {\large $t_2$};
         
         \node (f1) at (2.5, 1) {\large $f_1$} ;
         \node (f2) at (5.5, -1.5) {\large $f_2$} ;
@@ -162,7 +173,7 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
         \label{fig.simple}
     \end{figure}
 	
-    \begin{figure}[h]
+    \begin{figure}
         \centering
         \begin{tikzpicture}[scale=0.5]
         
@@ -178,9 +189,9 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
         (5, -4) -- (8, -4) -- 
         (8, -3.75);
         
-        \node (t1) at (1.45, -3.45) {\large $t_1$};
-        \node (t2) at (4, -3.45) {\large $t_2$};
-        \node (t3) at (6.5, -3.45) {\large $t_3$};
+        \node (t1) at (1.45, -3.45) {\large $t_0$};
+        \node (t2) at (4, -3.45) {\large $t_1$};
+        \node (t3) at (6.5, -3.45) {\large $t_2$};
         
         \node (f1) at (5.5, 1) {\large $f_1$} ;
         \node (f2) at (2.5, -1.5) {\large $f_2$} ;
@@ -190,29 +201,42 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
     \end{figure}
     
     \section{Environment, implicit and explicit connections}
-    In the traditional data flow paradigm, nodes are linked together through connections in their respective input and output ports.
+    In the data flow paradigm, nodes are linked together through connections in their respective input and output ports.
     
-    We extend this with a permanent external environment, that contains a mapping of key-value pairs. 
+    We introduce a permanent external environment, that contains a mapping of key-value pairs.
     Keys are specified with OSC-like\cite{osc} adresses: \lstinline|/foo/bar| and values can be any kind of data: numbers, strings, etc. 
-    The values of the environment may vary independently of the execution of the program: for instance elements of the environment could be changed asynchronously through the network, graphical widgets or physical controls.
+    The values of the environment may vary independently of the execution of the program: for instance elements of the environment may be changed asynchronously through the network, graphical widgets or physical controls.
     
-    We then have to provide a mean to use the values of this environment to the dataflow graph.
+    We then have to provide a mean to use the values of this environment to the dataflow.
     Thus, we extend the inputs and outputs ports with the following expliciteness semantic: 
     
     \begin{itemize}
-        \item An explicit port has been connected by the developer to another port.
-        \item An implicit port has not been connected to another port but may accept any number of adress - value pairs from the environment to perform its work.
+        \item An explicit port has been connected manually to another port.
+        An input port may only read tokens from the output port it is connected to.
+
+        \item An implicit port has not been connected to another port. 
+        It may read and write to any number of adresses from the environment to perform its work.
+        Every write done by a node is inserted in a sub-environment scoped to the duration of the tick.
     \end{itemize}
     
     During a tick, adresses have access to two sets of values: 
     \begin{itemize}
         \item The values that were in the environment at the beginning of the tick.
-        \item The values produced by previous nodes in the graph.
+        \item The values produced by previous implicit output ports in the dataflow.
+        Section~\ref{sec.relationships} presents the various policies that nodes can leverage to 
+        use these values.
     \end{itemize}
 
-    It is up to the developer of nodes of the graph to choose whether a port can only work when connected explicitely, or with the environment produced from previous nodes, or with the global environment, or both.
+    It is up to the implementor of nodes of the graph to choose whether a port can only work: 
+    \begin{itemize}
+        \item When connected explicitely,
+        \item With the environment produced from previous nodes,
+        \item With the global environment,
+        \item With both of the previous.
+    \end{itemize} 
 
-    This mechanism allows for new patterns during the creation of a dataflow program: for instance, instead of accepting data from a single source, a port could specify a pattern (see OSC 1.1 paper with XPath) such as: \lstinline|/foo.*/bar/b[a-zA-Z]|. 
+    This mechanism allows for new patterns during the creation of a dataflow program.
+    For instance, instead of accepting data from a single source, a port could specify an input pattern (see OSC 1.1 paper with XPath) such as: \lstinline|/foo.*/bar/b[a-zA-Z]|.
     % TODO pattern-matched addresses on the output: seems hard ? how to match it with a "pattern-matched" input port ??
 	%Inner data: reduces the possibilities of connection: everything has to be there (explicit)
 	
@@ -224,9 +248,14 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
     % TODO sample-precision of the activation / deactivation of a process / node
     % TODO 
 	\section{Relationships}
-    We are interested in the relationships between nodes of the dataflow graph when they produce compatible tokens.
-     
-     NOTE : if we have cables  we shouldn't have the "parameters" spill to other nodes. 
+    \label{sec.relationships}
+    We are interested in the relationships between nodes of the dataflow graph when they produce compatible tokens, whether the production is specified implicitely or explicitely.
+    
+    We propose five relationships : strict, glutton, delayed, mixed, and replaced. 
+    For some of these relationships, an ordering on the nodes is necessary. 
+    For this, a set of directed edges between nodes of the dataflow is used to provide this order.
+    Methods to set up these edges are discussed in section~\ref{sec.order}.
+    
     \subsection{Strict}
     An execution of a sub-graph can only happen when all the nodes of the sub-graph are executing.
     
@@ -234,12 +263,13 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
     
     For instance, take the case in fig.~\ref{fig.simple} where $f_1$ and $f_2$ both read from $/a$ and write to $/a$.
     
-    Let $t$ be the time of the tick and $e$ the global environment. We assume that $f_1, f_2$ always have access to this information.
+    Let $t$ be the time of the tick and $e$ the global environment. 
+    We assume that $f_1, f_2$ always have access to this information.
     
     We will get the following set of equations representing the behaviour: 
     \begin{itemize}
         \item During $t_0$: $\emptyset$.
-        \item During $t_1$: $f_2 \circ f_1 $ or $f_1 \circ f_2$.
+        \item During $t_1$: $f_2 \circ f_1 $ or $f_1 \circ f_2$ depending on the node ordering.
         \item During $t_2$: $\emptyset$. 
     \end{itemize}
 
@@ -255,23 +285,25 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
         \item $t_2$: $f_2$. 
     \end{itemize}
 
-    The glutton execution may happen explicitely or implicitely.
+    The glutton execution may only happen when nodes are engaged in an implicit relationship.
     
 	\subsection{Delayed}
 	A connection between an output and an input is delayed through bufferisation in a queue.
 	
-	The bufferisation can behave in two way:
+	The delayed execution can behave in two ways:
 	\begin{itemize}
-		\item Readers of the buffer always start from the same point (the beginning of the previous function in the callback chain).
+		\item Readers of the buffer always start from the same point : the beginning of the previous function in the callback chain.
 		\item Readers of the buffer continue from the latest read position.
-		Question: what happens in case of multiple read ?
+        In this case, the developer has to enforce that a single connection flowing from an output would be active at a given time, to prevent invalid reads .%Question: what happens in case of multiple read ?
 	\end{itemize}
 	
-    Note: this question has an answer in PLOP2006.
+    %Note: this question has an answer in PLOP2006.
     
     The delayed execution has be specified explicitely for the tokens to be bufferised.
+    It would be possible
     
-    If we have a delay connection from $f_1$ to $f_2$, the first call to $f_2$ will use the first value that was produced by $f_1$, and nothing before.
+    If we have a delay connection from $f_1$ to $f_2$, the first call to $f_2$ will use the first value that was produced by $f_1$.
+    If the execution order happens to be reversed, such as in the case of fig.~\ref{fig.simple-reversed}, nothing will be read, and the execution will only happen during $t_1$.
 	
 	\subsection{Parallelized and mixed}
 	All the sub-graphs are run with the same input environment. 
@@ -281,10 +313,10 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
     
     Thus, we have to define summing operations for each of the data types supported.
     
-    We propose for instance: 
+    We propose for instance the following operations: 
     \begin{itemize}
         \item For simple parameters such as MIDI control changes or OSC messages: the latest value replaces the previous ones.
-        \item For audio streams: the streams are mixed together.
+        \item For audio streams: two alternatives : the streams are mixed together, or the streams are put in additional channels.
         \item For MIDI notes: the notes are played together.
     \end{itemize}
 
@@ -298,8 +330,10 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
      
 	\subsection{Replaced}
 	All the nodes are run with the same input environment. 
-	The resulting values put in the environment are those of the latest graph execution.
-	 
+	The resulting values put in the environment are those of the latest node executing in the following dependent nodes.
+    
+    Software authors may still have to execute the previous nodes if they happen to produce side-effects.
+    
     \begin{itemize}
         \item $t_0$: $f_1$.
         \item $t_1$: $f_1$ or $f_2$.
@@ -308,8 +342,20 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
 
     The replaced execution may happen explicitely or implicitely.
     
-    \section{Where to put the relationships}
+    \section{Specifying the relationships}
+    A remaining problem is the specification of the kind of relationship between two ports, and, more precisely, 
+    where this relationship should be specified.
+    
+    We study the implication of bearing such annotations for each object in the dataflow.
+
     \subsection{In the cables}
+    The most precise way to set-up dependency-related information would be in 
+    the cables connecting two ports. 
+    
+    It is also the only way to set-up a delayed connection.
+    
+    However, it would also be the most tedious for users if the patch changes often.
+    
     \subsection{In the ports}
     \subsection{In the nodes}
     \subsection{In the addresses}
@@ -325,20 +371,28 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
     
   
     \section{Default behaviours for orders}
-    We study here the various behaviours possible to handle the dependency between nodes of the graph. 
-    We can for instance leverage information provided in the temporal graph to connect the nodes at runtime. 
+    \label{sec.order}
+    We study here the various behaviours possible to handle the dependency between nodes of the graph.
+    information provided provided in the timeflow can be leveraged to connect the nodes at runtime in a fashion 
+    that would make sense to composers \& authors.
+    
+    By default, any non-ordered node would strive to be scheduled at the earliest possible time.
+    
+    Connections between ports imply an ordering between nodes, hence we only consider the ordering between implicitely connected nodes of the dataflow.
     
     \subsection{Manual ordering}
-    The user explicitely draws a cable between two ports.
+    In this case, the author explicitely specifies an order by setting up an edge between two nodes. 
+    This is the slowest process, but which gives the most precise specification.
     
     \subsection{Hierarchical}
-    We follow the hierarchical organization of the temporal graph~: each time constraint has an ordered list of processes, and each time constraint is itself ordered in the scenario. This gives an order between processes.
+    We follow the hierarchical organization of the timeflows~: each time constraint has an ordered list of processes, and each time constraint is itself ordered relative to others in a given timeflow. 
+    This gives a natural order between processes.
     
     \subsection{Temporal}
-    If no order is given, the temporal order in which objects are executed
-    will become the order of chaining in the call graph.
+    In this case, the temporal order in which objects are executed
+    will become the order of chaining in the dataflow.
     
-    That is, if the execution happens in the order of the fig.~\ref{fig.simple}, we get the following execution: 
+    That is, if a glutton execution happens in the order of the fig.~\ref{fig.simple}, we get the following execution: 
     
     \begin{itemize}
         \item $t_0$: $f_1$.
@@ -346,13 +400,19 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
         \item $t_2$: $f_2$. 
     \end{itemize}
 
-    Instead, if we are in the case of fig.~\ref{fig.simple-reversed}, we get for $t_1$ the execution $f_1 \circ f_2$.
+    Instead, if we are in the case of fig.~\ref{fig.simple-reversed}, we get: 
     
-	\section{Evaluation algorithm}
-    We present here the evaluation algorithm that operates at each tick.
+    \begin{itemize}
+        \item $t_0$: $f_2$.
+        \item $t_1$: $f_1 \circ f_2$.
+        \item $t_2$: $f_1$. 
+    \end{itemize}
+    
+	%\section{Evaluation algorithm}
+    %We present here the evaluation algorithm that operates at each tick.
     
     
-	Divide the time in abstract segment according to the activation graph; gives us a set of equations for each variable.
+	%Divide the time in abstract segment according to the activation graph; gives us a set of equations for each variable.
 	\section{Implementation}
     \section{Conclusion}
     Additional consideration: see PLOP 2006 article (multi-stream, etc), sample accuracy, etc
