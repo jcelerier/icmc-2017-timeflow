@@ -361,6 +361,8 @@ The delayed execution can behave in two ways:
   \item Readers of the buffer continue from the latest read position.
         In this case, the developer has to enforce that a single connection flowing from an output would be active at a given time, to prevent invalid reads .%Question: what happens in case of multiple read ?
 \end{itemize}
+
+Arumi presents in~\cite{arumi2006dataflow} the advantages and drawbacks of both approaches.
 	
 %Note: this question has an answer in PLOP2006.
     
@@ -413,30 +415,25 @@ where this relationship should be specified.
     
 We study the implication of bearing such annotations for each object in the dataflow.
 
-\subsection{In the cables between ports}
+The most obvious candidates are the cables betweens ports, and the dependency edges between nodes of the dataflow.
+
 The most precise way to set-up dependency-related information would be in 
 the cables connecting two ports. 
     
 It is also the only way to set-up a delayed connection.
     
 However, it would also be the most tedious for users if the patch changes often.
+
     
 \subsection{In the edges between nodes}
 
+\subsection{Other}
+Default behaviours can be encoded either globally, per address, or hierarchically in a timeflow.
 
-\subsection{In the ports}
-\subsection{In the nodes}
-\subsection{In the addresses}
-No temporal behaviour possible
-\subsection{Global behaviour}
-No temporal behaviour possible
-\subsection{Overall resolution}
-Unspecified by default. 
-    
-Hierarchical: cable, port, node, address, global.
-    
-Default global behaviour: glutton.
-    
+However, temporal behaviours cannot be encoded this way.
+
+We choose a default glutton behaviour; however usability studies should be led to determine the most user-friendly default behaviour.
+
   
 \section{Default behaviours for orders}
 \label{sec.order}
@@ -459,9 +456,10 @@ This gives a natural order between processes.
 \subsection{Temporal}
 In this case, the temporal order in which objects are executed
 will become the order of chaining in the dataflow.
+
+With the OSSIA semantics, this order could change at each run of a score.
     
-    
-\begin{figure}
+\begin{figure}[h]
   \begin{subfigure}{0.20\textwidth }    		    		
     \begin{itemize}
       \item $t_0$: $f_1$.
@@ -480,23 +478,24 @@ will become the order of chaining in the dataflow.
     \caption{
     	Glutton execution in the case of fig.~\ref{fig.simple-reversed}}
   \end{subfigure}
-  \caption{}
+  \caption{Executions with a temporal ordering}
 \end{figure}
     
-\section{Evaluation algorithm}
-- Split the tick in steps
-- Each step, go to the next elements (follow the cables) and find all the nodes that can be currently called.
+%\section{Evaluation algorithm}
+%- Split the tick in steps
+%- Each step, go to the next elements (follow the cables) and find all the nodes that can be currently called.
 %We present here the evaluation algorithm that operates at each tick.
     
     
 %Divide the time in abstract segment according to the activation graph; gives us a set of equations for each variable.
-\section{Implementation}
+%\section{Implementation}
 \section{Conclusion}
-Additional consideration: see PLOP 2006 article (multi-stream, etc), sample accuracy, etc
+%Additional consideration: see PLOP 2006 article (multi-stream, etc), sample accuracy, etc
     
-Explicit cables: optimization.
+%Explicit cables: optimization.
 
-Generalization to not only a single variable of time, but any kind of driving parameters
+%Generalization to not only a single variable of time, but any kind of driving parameters
 \section{Acknowledgements}
+Redacted.
 \printbibliography 
 \end{document}
