@@ -7,11 +7,11 @@
 \usepackage{soul}
 \usepackage{microtype}
 \usepackage{polyglossia}
-%\usepackage{geometry}
+
 \usepackage{tikz}
 \usepackage{listings}
-
-\def\papertitle{Paper Template for ICMC 2017}
+\usepackage{subcaption}
+\def\papertitle{Temporal dataflows and their application to generative music}
 \def\firstauthor{First Author}
 \def\secondauthor{Second Author}
 \def\thirdauthor{Third Author}
@@ -52,7 +52,7 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
     urlcolor=black
 }
 
-\title{Temporal dataflows and their application to generative music}
+\title{\papertitle}
 
 \begin{document}
     
@@ -64,13 +64,13 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
     \end{abstract}
     
     \section{Introduction}
-    This work explores the association of temporal semantics to standard data flow graphs used in music and signal processing.
+    This work explores the association of macroscopic temporal semantics to standard data flow graphs used in music and signal processing.
     
     We analyze the meanings that can be given to a graphical representation of processes executing in time. 
     
     For instance, given two processes $p_1, p_2$, what can be said of a program where $p_1$ executes from $t=0$ to $t=5$ seconds, and $p_2$ from $t=3$ to $t=6$ when $p_1$ and $p_2$ operate on the same data.
     
-    An example would be an audio filter: $p_1$ is a low-pass and $p_2$ a reverb.
+    An example would be an audio filter: $p_1$ is a low-pass and $p_2$ a reverb; we want the reverb to activate only after an action of a performer and stop after a few seconds.
     
     The simplest strategy can be to only allow execution when all processes are active and have been given a definite order of execution: in this case the processes will only execute from $t=3$ to $t=5$ and behave like function composition. 
     While safe from the point of view of software execution, we will show that other execution policies leveraging information from the temporal layout of the processes can provide composers with new creative capabilities.
@@ -79,8 +79,8 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
     We start by making the case for an environment associated with the dataflow graph that contains the values of the inputs and outputs.
     Then, since a graph may not always be fully active, we show that it is also meaningful to have implicit connections between nodes of the graph, that will use the environment.
     This allows dynamic routing of the processes according to their temporal order during execution, and extends routing to pattern-matched elements of the environment instead of single values.
-    We enumerate four different behaviours regarding the input and output parameters when the nodes are implicitely connected at runtime using the environment: strict, glutton, parallelized, and replaced. 
-    Additionnaly, when the node are explicitely connected, we introduce a delay mechanism that allows a computation to happen on data previously produced by another node of the graph.
+    We enumerate different behaviours regarding the input and output parameters when the nodes are implicitely connected at runtime using the environment: strict, glutton, parallelized, and replaced. 
+    Additionnaly, when the node are explicitely connected, we introduce a delay mechanism that allows a computation to happen on data previously produced by another node of the graph, instead of reading the current tokens.
     
     \subsection{Related works}
     Citer Kyma
@@ -88,11 +88,13 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
     Perl
     Boolean dataflows (http://pop-art.inrialpes.fr/~fradet/PDFs/RR8333.pdf)
     
-    \subsection{Examples}
+%    \subsection{Examples}
     
     \subsection{Temporal formalism}
+    This work implicitely uses the OSSIA formalism to provide primitives relative to the evolution of time: time constraints (horizontal lines), time nodes (vertical lines). 
+    The elements of its syntax are presented in fig.~\ref{fig.iscore-example}.
     
-    \begin{figure}
+    \begin{figure}[h]
         \centering
         \includegraphics[width=0.45\textwidth]{images/iscore-example.eps}
         \caption{Part of an i-score scenario, showcasing the temporal syntax used. 
@@ -392,21 +394,30 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
     In this case, the temporal order in which objects are executed
     will become the order of chaining in the dataflow.
     
-    That is, if a glutton execution happens in the order of the fig.~\ref{fig.simple}, we get the following execution: 
     
-    \begin{itemize}
-        \item $t_0$: $f_1$.
-        \item $t_1$: $f_2 \circ f_1$.
-        \item $t_2$: $f_2$. 
-    \end{itemize}
-
-    Instead, if we are in the case of fig.~\ref{fig.simple-reversed}, we get: 
     
-    \begin{itemize}
-        \item $t_0$: $f_2$.
-        \item $t_1$: $f_1 \circ f_2$.
-        \item $t_2$: $f_1$. 
-    \end{itemize}
+    \begin{figure}
+    	\begin{subfigure}{0.15\textwidth }
+    		
+    		\begin{itemize}
+    			\item $t_0$: $f_1$.
+    			\item $t_1$: $f_2 \circ f_1$.
+    			\item $t_2$: $f_2$. 
+    		\end{itemize}
+    		\caption{Glutton execution in the order of the fig.~\ref{fig.simple}}
+    	\end{subfigure}~
+    \begin{subfigure}{0.15\textwidth}
+    	
+    	\begin{itemize}
+    		\item $t_0$: $f_2$.
+    		\item $t_1$: $f_1 \circ f_2$.
+    		\item $t_2$: $f_1$. 
+    	\end{itemize}
+    	\caption{
+    		Instead, if we are in the case of fig.~\ref{fig.simple-reversed}, we get: }
+    \end{subfigure}
+    \caption{}
+    \end{figure}
     
 	%\section{Evaluation algorithm}
     %We present here the evaluation algorithm that operates at each tick.
