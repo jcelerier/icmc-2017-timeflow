@@ -1,0 +1,12 @@
+#N canvas 1100 78 270 1102 10;
+#X obj 78 56 hip~;
+#X obj 78 20 r \$0-in-2;
+#X obj 27 57 hip~;
+#X obj 27 20 adc~;
+#X obj 27 94 dac~;
+#X connect 0 0 4 1;
+#X connect 1 0 0 1;
+#X connect 1 0 2 1;
+#X connect 2 0 4 0;
+#X connect 3 0 2 0;
+#X connect 3 1 0 0;

@@ -585,7 +585,47 @@ This implementation uses PureData via libpd to provide function execution with m
 with primitives useful for musical creation.
 
 \section{Applied example: generative music}
+We present here an example that leverages patches built with Pure Data\cite{puckette1996pure}.
+\begin{figure}[h]
+	\centering
+	\begin{subfigure}{0.21\textwidth}
+		\includegraphics[scale=0.5]{images/pd-1.png}
+		\caption{$f_1$: generates a random note on each bang}
+	\end{subfigure}
+\begin{subfigure}{0.21\textwidth}
+	\includegraphics[scale=0.5]{images/pd-2.png}
+	\caption{$f_2$: generates another random note on each bang}
+\end{subfigure}
 
+\begin{subfigure}{0.21\textwidth}
+	\includegraphics[scale=0.5]{images/pd-3.png}
+	\caption{$f_3$: synthesizes a note, sets the volume}
+\end{subfigure}
+\begin{subfigure}{0.21\textwidth}
+	\includegraphics[scale=0.5]{images/pd-4.png}
+	\caption{$f_4$: applies an high-pass filter}
+\end{subfigure}
+\begin{subfigure}{0.21\textwidth}
+\includegraphics[scale=0.5]{images/pd-5.png}
+\caption{$f_5$: applies a low-pass filter}
+\end{subfigure}
+\caption{The functions we use in our example, as defined in PureData.}
+\end{figure}
+
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[scale=0.7]{images/nodes.eps}
+	
+	\caption{The relationships between instances of $f_{1,..5}$ in the program}
+\end{figure}
+
+\begin{figure}
+	\begin{tikzpicture}
+	\input{scores/score2.tex}
+	\end{tikzpicture}
+	\caption{}
+\end{figure}
 \section{Conclusion}
 Throughout this paper, the effects of adding macro-temporal semantics to dataflows were studied. 
 The first step is to introduce an environment that allows execution of a program to continue if not all the nodes of a dataflow are currently being executed.
