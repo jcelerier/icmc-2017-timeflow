@@ -8,6 +8,7 @@
 \usepackage{microtype}
 \usepackage{csquotes}
 \usepackage{polyglossia}
+\usepackage{amsmath}
 
 \setdefaultlanguage{english}
 \usepackage{tikz}
@@ -20,11 +21,13 @@
 \usepackage[backend=biber]{biblatex}
 \addbibresource{biblio.bib}
 
-\def\papertitle{Timeflows: extending dataflows in the temporal domain}
+\def\papertitle{Extending dataflows with temporal graphs}
 \def\firstauthor{First Author}
 \def\secondauthor{Second Author}
 \def\thirdauthor{Third Author}
-
+\author{Authors redacted}
+\DeclareMathOperator{\commit}{commit}
+\DeclareMathOperator{\pull}{pull}
 
 \lstset{basicstyle=\ttfamily\footnotesize,breaklines=true}
 
@@ -65,7 +68,7 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
 \end{abstract}
     
 \section{Introduction}
-This work explores the association of macroscopic temporal semantics to standard data flow graphs used in music and signal processing.
+This work explores the association of macroscopic temporal semantics with the dataflow graphs generally used in music and signal processing.
     
 We analyze the meanings that can be given to a graphical representation of processes executing in time. 
     
@@ -80,7 +83,7 @@ The main problem that arises is that composers may specify relationships between
 We start by making the case for an environment associated with the dataflow graph that contains the values of the inputs and outputs.
 Then, since a graph may not always be fully active, we show that it is also meaningful to have implicit connections between nodes of the graph, that will use the environment.
 This allows dynamic routing of the processes according to their temporal order during execution, and extends routing to pattern-matched elements of the environment instead of single values.
-We enumerate different behaviors regarding the input and output parameters when the nodes are implicitly connected at runtime using the environment: strict, glutton, parallelized, and replaced. 
+We enumerate present three different behaviors between the input and output parameters when the nodes are implicitly connected at runtime using the environment: strict, glutton, and delayed. 
 Additionally, when the node are explicitly connected, we introduce a delay mechanism that allows a computation to happen on data previously produced by another node of the graph, instead of reading the current tokens.
     
 \subsection{Related works}
@@ -92,12 +95,12 @@ More recently, Céu has been introduced as a synchronous language with temporal 
 OpenMusic is a visual environment which allows to write music by functional composition.
 It has been recently extended with timed sequences allowing to specify evolutions of parameters in time\cite{garcia:hal-01484077}.
 
-Dataflows and especially synchronous dataflows have also seen tremendous usage in the music and signal processing community. 
+Dataflows and especially synchronous dataflows have seen tremendous usage in the music and signal processing community. 
 A list of patterns commonly used when developing dataflow-based music software is presented in~\cite{arumi2006dataflow}.
 Formal semantics are given in~\cite{benveniste_data-flow_1993}.
-Specific implementations of dataflow systems are discussed in both editions of the Handbook of Signal Processing Systems\cite{bhattacharyya_handbook_2013}. 
+Specific implementation aspects of dataflow systems are discussed in the Handbook of Signal Processing Systems\cite{bhattacharyya_handbook_2013}. 
 
-Dynamicity in dataflows is generally separated in two independent aspects : dynamicity of the data, and of the topology.
+Dynamicity in dataflows is generally separated in two independent aspects: dynamicity of the data, and of the topology.
 The first relates to the variability on the streams of tokens, while the second is about changes to the structure of the graph. 
 Boolean parametric dataflows\cite{bempelis2015boolean} have been proposed to solve dynamicity of topology, by introducing conditionals at the edges.
 
@@ -116,25 +119,28 @@ The elements of its syntax are presented in fig.~\ref{fig.iscore-example}.
 \end{figure}
     
 \section{Definitions}
-We call process an entity that consists in a state, an associated function $f$, any number of inputs and output ports, and an activation status.
+We call process an entity that consists in a function $f$, an associated state, any number of inputs and output ports, and an activation status.
 $f$ has a single argument $t \in \mathbb{R^+}$.
 The execution of $f$ may read any number of tokens from the inputs and write any number of tokens to the outputs.
     
+The function associated to an inactive process may not be executed.
+
 We rely on two families of graphs for defining the execution of a program:
     
 \begin{itemize}
   \item Synchronous dataflows between processes: input and output ports can be connected together to enforce data dependencies.
   \item Temporal graphs, based on the OSSIA formalism: $G_t(V_t, E_t)$ where $V_t$ is the set of time nodes and $E_t$ is the set of time constraints in a score. 
-  For coherency, we call these graphs timeflows.
+  For coherency, we call these graphs temporal graphs.
 \end{itemize}
 
-A program consists in the sequential and parallel execution of multiple processes, specified by a single dataflow, and at least one timeflow.
+In the following, we consider a program consisting in a dataflow, and a temporal graph.
     
-There may be more than a single timeflow: they are defined as processes themselves, which provides them with time information.
-They have no input or output.
+There may be more than a single temporal graph: they are defined as processes themselves, which provides them with time information.
+A temporal graph does not have inputs or outputs.
     
 Each time constraint has an associated set of references to processes.
-For each process in the dataflow, there is exactly one reference to this process in the set of all timeflows.
+A process may only be executed if it is referenced at least once in a time constraint, 
+at the exception of a special ``main'' process that acts as an entrypoint.
     
 The execution of a program is synchronous and driven by a scheduler.
 At each tick, the state of each temporal graph is updated with the following informations:
@@ -144,10 +150,9 @@ At each tick, the state of each temporal graph is updated with the following inf
   \item For how long these processes have been activated.
 \end{itemize}
 
-This is done according to the various events that occur and may trigger conditions and interaction points present in the temporal score.
-    
-Only activated processes may be called in a given tick.
-    
+This is done according to the various events that occur and may change the order of activation of processes.
+
+Processes are then sorted according to their dependencies and activation status, and finally executed.
 % In a given tick, every active process will be executed. ?
 %Event-driven vs time-driven vs sound-driven ; each node has a "driver" port which is the time or the sound. (Do like LV2: pass empty buffers). Pb: multi-rate ... voir méthode pour passer de multi-rate à single rate dans PLOP2006 et Signal Flow Graphs and Data Flow Graphs (3.2, 3.3), dans Handbook of Signal Processing (First Edition)
     
@@ -158,8 +163,6 @@ Only activated processes may be called in a given tick.
     
 Throughout this paper, we will use the execution traces in fig.~\ref{fig.simple} and fig.~\ref{fig.simple-reversed} as running example, as well as the relationships between $f_1$ and $f_2$ present in fig.~\ref{fig.simple-dataflow}. 
     
-Finally, we will call developers the persons implementing dataflow-based software and users, authors, or composers the persons using dataflow-based software to implement their own music algorithms.
-
 \begin{figure}[h]
 	\centering
 	\begin{subfigure}{0.15\textwidth}\centering
@@ -182,8 +185,19 @@ Finally, we will call developers the persons implementing dataflow-based softwar
 		\node[draw, circle] (f2) at (3, 0) { $f_2$ };
 		\end{tikzpicture}\caption{}
 	\end{subfigure}
-	\caption{Possible dataflows between $f_1$ and $f_2$}
+	\caption{Possible dataflows between $f_1$ and $f_2$. 
+		As can be seen in fig.~\ref{fig.tgraph}, there are no relationships between $f_1$ and $f_2$ in the temporal graph.}
 	\label{fig.simple-dataflow}
+\end{figure}
+
+\begin{figure}[h]
+
+\centering
+\begin{tikzpicture}[]
+\input{scores/score.tex}
+\end{tikzpicture}
+\caption{The matching temporal graph}
+\label{fig.tgraph}
 \end{figure}
 
 \begin{figure}
@@ -191,8 +205,8 @@ Finally, we will call developers the persons implementing dataflow-based softwar
 \begin{subfigure}{0.22\textwidth}
   \centering
   \begin{tikzpicture}[scale=0.25]
-    \draw[] (0, 0) rectangle (5, 2);
-    \draw[] (0 + 3, 0 - 2.5) rectangle (5 + 3, 2 - 2.5);
+    \draw[] (0, 0) rectangle (5, 2) node[pos=.5] { $f_1$ };
+    \draw[] (0 + 3, 0 - 2.5) rectangle (5 + 3, 2 - 2.5) node[pos=.5] { $f_2$ };
     		        
     \draw[] 
     (0, -3.75) -- 
@@ -206,9 +220,6 @@ Finally, we will call developers the persons implementing dataflow-based softwar
     \node (t1) at (1.45, -3.45) {\footnotesize $t_0$};
     \node (t2) at (4, -3.45) {\footnotesize $t_1$};
     \node (t3) at (6.5, -3.45) {\footnotesize $t_2$};
-    		        
-    \node (f1) at (2.5, 1) {\footnotesize $f_1$} ;
-    \node (f2) at (5.5, -1.5) {\footnotesize $f_2$} ;
   \end{tikzpicture}
   \caption{A possible trace of execution for $f_1$ and $f_2$}
   \label{fig.simple}
@@ -217,8 +228,8 @@ Finally, we will call developers the persons implementing dataflow-based softwar
   \centering
   \begin{tikzpicture}[scale=0.25]
     		        
-    \draw[] (0 + 3, 0) rectangle (5 + 3, 2);
-    \draw[] (0, 0 - 2.5) rectangle (5, 2 - 2.5);
+    \draw[] (0 + 3, 0) rectangle (5 + 3, 2) node[pos=.5] { $f_1$ };
+    \draw[] (0, 0 - 2.5) rectangle (5, 2 - 2.5) node[pos=.5] { $f_2$ };
     		                
     \draw[] 
     (0, -3.75) -- 
@@ -232,44 +243,43 @@ Finally, we will call developers the persons implementing dataflow-based softwar
     \node (t1) at (1.45, -3.45) {\footnotesize $t_0$};
     \node (t2) at (4, -3.45) {\footnotesize $t_1$};
     \node (t3) at (6.5, -3.45) {\footnotesize $t_2$};
-    		        
-    \node (f1) at (5.5, 1) {\footnotesize $f_1$} ;
-    \node (f2) at (2.5, -1.5) {\footnotesize $f_2$} ;
   \end{tikzpicture}
   \caption{Another trace of execution}
   \label{fig.simple-reversed}
 \end{subfigure}
-\caption{Process activation traces}
+\caption{Process activation traces corresponding to the graph given in \ref{fig.tgraph}}
 \end{figure}
 
     
 \section{Environment, implicit and explicit connections}
 In the data flow paradigm generally used in music software, nodes are linked together through connections in their respective input and output ports.
     
-This work extends it with a permanent external environment, that contains a mapping of key-value pairs.
+This work extends the data flow approach with a permanent external environment, that contains a mapping of key-value pairs. 
+Such a pair is called a variable.
+
 Keys are specified with OSC-like\cite{Freed09featuresand} addresses: \lstinline|/foo/bar| and values can be any kind of data: numbers, strings, etc. 
 The values of the environment may vary independently of the execution of the program: for instance elements of the environment may be changed asynchronously through the network, graphical widgets or physical controls.
     
 We then have to provide a mean to use the values of this environment to the dataflow.
-Thus, we extend the inputs and outputs ports with the following explicitness semantic: 
+Thus, we extend the input and output ports with the following explicitness semantic: 
     
 \begin{itemize}
-  \item An explicit port has been connected manually to another port.
+  \item{An explicit port is a port that has been connected manually to another port.
         An input port may only read tokens from the output port it is connected to.
-  \item An implicit port has not been connected to another port. 
-        It may read and write to any number of addresses from the environment to perform its work.
-        Every write done by a node is inserted in a sub-environment scoped to the duration of the tick.
-        It is up to the developer of the music software to choose whether the requested addresses for each node are specified statically, that is, in the definition of the dataflow, or dynamically.
-        Dynamic behavior would allow to receive input from a random output at each tick for instance, but makes the program harder to comprehend for authors.
+        This connection is static and will not change for the duration of the execution.\footnote{Reactive environments would of course be able to alter such connections at run-time; relevant mechanisms are outside of the scope of this paper.}} 
+  \item{An implicit port is a port that has not been connected to another port. 
+        It may dynamically read and write to any number of addresses from the environment to perform its work.}
 \end{itemize}
     
-During a tick, addresses have access to two sets of values, corresponding to scopes: 
+During a tick, ports have access to three sets of values, corresponding to scopes: 
 \begin{itemize}
-  \item Global scope: The values that were in the environment at the beginning of the tick.
-  \item Local scope: The values produced by previous implicit output ports in the dataflow.
-        Section~\ref{sec.relationships} presents the various policies that nodes can leverage to 
-        use these values. 
-        These values are committed to the environment at the end of a tick.
+  \item {Global scope: The values that were in the environment at the beginning of the tick. 
+  These values are accessible to every process.}
+  \item {Local scope: The values produced by previous implicit output ports in the dataflow.
+        Section~\ref{sec.relationships} presents the various policies that nodes can leverage to use these values. 
+        The local scope is cleared at the beginning of a tick. 
+        The values written to it are committed to the global environment at the end of the tick.}
+  \item{Connection scope: the explicit scope between two ports; the data flowing from one out port can only go to input ports it is connected to. This is the explicit case.}
 \end{itemize}
 
 For a given execution following fig.~\ref{fig.f1tof2}, the evolution of such parameters would behave as in table~\ref{tbl.evolution}.
@@ -283,23 +293,12 @@ For a given execution following fig.~\ref{fig.f1tof2}, the evolution of such par
 		Global \lstinline|/a|  & $a_0$ & $a_0$ & $a_0$ & $f2(f1(a_0))$\\
 		Local \lstinline|/a|   & $\emptyset$ & $f_1(a_0)$ & $f2(f1(a_0))$ & $\emptyset$ \\	
 	\end{tabular}
-	\caption{Evolution of a parameter in the global and local scope during the execution of a tick. 
+	\caption{Evolution of a variable in the global and local scope during the execution of a tick, in the case of an implicit connection. Both $f_1$ and $f_2$ are active. 
         ``Tick'' indicates the beginning of a new tick; the temporal progression is left-to-right.}
 	\label{tbl.evolution}
 \end{table}
 
-It is up to the implementor of nodes of the graph to choose whether a port can work: 
-\begin{itemize}
-  \item When connected explicitly,
-  \item With the environment produced from previous nodes,
-  \item With the global environment,
-  \item With both of the previous.
-\end{itemize} 
-
 This mechanism allows for new behaviors during the creation of a dataflow program.
-For instance, instead of accepting data from a single source, a port can specify an input pattern such as: \lstinline|/foo.*/bar/b[a-zA-Z]|, as proposed in the OSC specification.
-
-Upon execution, the input stream of the port would contain the list of the matching addresses.
 
 % TODO pattern-matched addresses on the output: seems hard ? how to match it with a "pattern-matched" input port ??
 %Inner data: reduces the possibilities of connection: everything has to be there (explicit)
@@ -313,129 +312,194 @@ Upon execution, the input stream of the port would contain the list of the match
 % TODO 
 \section{Relationships}
 \label{sec.relationships}
-We are interested in the relationships between nodes of the dataflow graph when they produce compatible tokens, whether the production is specified implicitly or explicitly
+We are interested in the relationships between nodes of the dataflow graph when they produce compatible tokens, whether the production is specified implicitly or explicitly, and when taking into account deactivated nodes.
     
-We propose five relationships : strict, glutton, delayed, mixed, and replaced. 
-For some of these relationships, an ordering on the nodes is necessary. 
-For this, a set of directed edges between nodes of the dataflow is used to provide this order.
+We propose three relationships: strict, glutton, and delayed.
+
+These relationships are expressed between ports of two nodes of the dataflow.
+%The last two are expressed between nodes.
+
+Two nodes may not always be explicitly connected to each other through a cable. 
+We have to provide an order between them since execution requires a total ordering of nodes.
+
+For this, an additional set of directed edges between nodes of the dataflow is used to provide this order.
 Methods to set up these edges are discussed in section~\ref{sec.order}.
+\subsection{Strict relationship}
+In a given tick, an execution of a node engaged in a strict relationship with another node depends on the other node being active.
+        
+For instance, take the case in fig.~\ref{fig.simple} where $f_1$ and $f_2$ both read from $a$ and write to $a$ where $a$ is an address.
+We use the dataflow given in fig.~\ref{fig.f1tof2}.
     
-\subsection{Strict}
-In a given tick, an execution of a sub-graph can only happen when all the nodes of the sub-graph are activated.
-    
-That is, if two nodes are compatible, the output of the first node can only go in the input of the second node when both are active.
-    
-For instance, take the case in fig.~\ref{fig.simple} where $f_1$ and $f_2$ both read from $/a$ and write to $/a$.
-    
-Let $t$ be the time of the tick and $e$ the global environment. 
+Let $\commit(a, x)$ be the function that commits a value $x$ to the address $a$ in the local scope, and $\pull(x)$ the function that reads the value of the address $x$ from the global scope.
 We assume that $f_1, f_2$ always have access to this information.
     
 We will get the following behaviors during each slice: 
 \begin{itemize}
   \item During $t_0$: $\emptyset$.
-  \item During $t_1$: $f_2 \circ f_1 $ or $f_1 \circ f_2$ depending on the node ordering.
+  \item During $t_1$: $\commit(a, (f_2 \circ f_1)(\pull(a)))$.
   \item During $t_2$: $\emptyset$. 
 \end{itemize}
 
-The strict execution may happen explicitly or implicitly.
+A strict relationship between two nodes may only be defined through an explicit connection.
+
+This relationship should be used when a computation does not make sense on its own.
+
+%TODO for instance...
     
-\subsection{Glutton}
-An execution of a sub-graph can happen whenever any of the nodes of a sub-graph are executing. 
+\subsection{Glutton relationship}
+An execution of a node will happen even if the nodes it is connected to are not active; instead, data will be read and written from the environment.
     
 If we take the same case than previously, the behavior is:
 \begin{itemize}
-  \item $t_0$: $f_1$.
-  \item $t_1$: $f_2 \circ f_1$ or $f_1 \circ f_2$.
-  \item $t_2$: $f_2$. 
+  \item $t_0$: $\commit(a, f_1(\pull(a)))$.
+  \item $t_1$: $\commit(a, (f_2 \circ f_1)(\pull(a)))$.
+  \item $t_2$: $\commit(a, f_2(\pull(a)))$. 
 \end{itemize}
 
-The glutton execution may only happen when nodes are engaged in an implicit relationship.
-    
-\subsection{Delay}
+This relationship may be explicit or implicit.
+
+In the explicit case, the output of $f_1$ goes to the input of $f_2$ through a cable. 
+If an address has been specified for each port in addition to the explicit connection:
+\begin{itemize}
+	\item If $f_1$ is not active, $f_2$ reads from the local scope instead, or the global scope if the required address is not available.
+	\item If $f_2$ is not active, $f_1$ writes to the local scope instead.
+\end{itemize}
+
+Such a behavior is conceptually similar to a guitarist's pedal board: not all pedals will always be active, but we want the signal to keep flowing even if a pedal is disabled.
+
+\subsection{Delayed relationship}
 A connection between an output and an input is delayed through bufferisation in a queue.
 	
-The delayed execution can behave in two ways:
+The delayed connection can behave in two ways:
 \begin{itemize}
-  \item Readers of the buffer always start from the same point : the beginning of the previous function in the callback chain.
-  \item Readers of the buffer continue from the latest read position.
-        In this case, the developer has to enforce that a single connection flowing from an output would be active at a given time, to prevent invalid reads .%Question: what happens in case of multiple read ?
+  \item Readers of the buffer always start from the same point: the beginning of the previous function in the callback chain. 
+  The frame pointer would be located in each delayed connection.
+  \item Readers of the buffer continue from the latest read position. 
+  The frame pointer would be located in the source port.
+
+  This behavior can be useful when multiple functions should apply successively to a single buffer, as in fig.~\ref{fig.delay2}.
+  However, it would also create concurrent accesses problems if two nodes happened to read an output at the same time.
+  
+  
 \end{itemize}
 
-Arumi presents in~\cite{arumi2006dataflow} the advantages and drawbacks of both approaches.
+Arumi presents in~\cite{arumi2006dataflow} the advantages and drawbacks of storing tokens at the output or input ports.
 
-The delayed execution has be specified explicitly for the tokens to be bufferised.
+This relationship has to be specified explicitly to allow for the tokens to be bufferised.
     
 If we have a delay connection from $f_1$ to $f_2$, the first call to $f_2$ will use the first value that was produced by $f_1$.
-If the execution order happens to be reversed, such as in the case of fig.~\ref{fig.simple-reversed}, nothing will be read, and the execution will only happen during $t_1$.
-\subsection{Parallelization and reduction}
-The next nodes are run with the same input environment, and summed:
 
-\begin{itemize}
-	\item $t_0$: $f_1$.
-	\item $t_1$: $s(f_1, f_2)$ where $s$ is the reduction operation, and $f_1$, $f_2$ are ran with the same input environment.
-	\item $t_2$: $f_2$. 
-\end{itemize}
+We define also define a strictness level for the delayed connection. 
+In the strict case, a node will only be able to execute if the source has produced enough tokens.
 
-Summing operations have to be defined for each of the data types supported by the system.
+That is, in fig.~\ref{fig.delay}, $f_2$ would only execute during $t_1$.
 
-We propose for instance the following operations for music software: 
-\begin{itemize}
-  \item For simple parameters such as MIDI control changes or OSC messages: the latest value replaces the previous ones.
-  \item For audio or media streams, the alternatives are to mix the streams together, or to put new streams in additional channels.
-  \item For MIDI notes: the notes are played together.
-\end{itemize}
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.45]
+\draw[] (3, 0) rectangle (5, 2) node[pos=.5] { $f_1$ };
+\draw[] (0, 0 - 2.5) rectangle (8, 2 - 2.5) node[pos=.5] { $f_2$ };
 
-The parallelized execution may happen explicitly or implicitly 
+\draw[] 
+(0, -3.75) -- 
+(0, -4) -- (3, -4) -- 
+(3, -3.75) --
+(3, -4) -- (5, -4) -- 
+(5, -3.75) -- 
+(5, -4) -- (8, -4) -- 
+(8, -3.75);
 
-\subsection{Replacement}
-All the nodes are run with the same input environment. 
-The resulting values put in the environment are those of the latest node executing in the following dependent nodes.
-    
-Software authors may still have to execute the previous nodes if they happen to produce side-effects.
-    
-\begin{itemize}
-  \item $t_0$: $f_1$.
-  \item $t_1$: $f_1$ or $f_2$.
-  \item $t_2$: $f_2$. 
-\end{itemize}
+\node (t1) at (1.45, -3.45) {\footnotesize $t_0$};
+\node (t2) at (4, -3.45) {\footnotesize $t_1$};
+\node (t3) at (6.5, -3.45) {\footnotesize $t_2$};
+\end{tikzpicture}
+\caption{Another execution trace. $f_2$'s input corresponds to $f_1$'s output, delayed: this creates a causality problem.}
+\label{fig.delay}
+\end{figure}
 
-The replaced execution may happen explicitly or implicitly.
-    
-\section{Specifying the relationships}
-A remaining problem is the specification of the kind of relationship between two ports, and, more precisely, 
-where this relationship should be specified.
+\begin{figure}[h]
+	\centering
+	\begin{tikzpicture}[scale=0.45]
+	\draw[] (0, 0) rectangle (4, 2) node[pos=.5] { $f_1$ };
+	\draw[] (1, -2.5) rectangle (2, -0.5) node[pos=.5] { $f_2$ };
+	\draw[] (3.5, -2.5) rectangle (4.5, -0.5) node[pos=.5] { $f_3$ };
+	\draw[] (6, -2.5) rectangle (7, -0.5) node[pos=.5] { $f_4$ };
+	
+	\end{tikzpicture}
+	\caption{$f_2$, $f_3$ and $f_4$ read from $f_1$ with a delayed connection.}
+	\label{fig.delay2}
+\end{figure}
 
-The most precise way to set-up dependency-related information would be as an attribute of 
-the cables connecting two ports. 
 
-It is also the only way to set-up a delayed connection, since a buffer may be needed for each connection, but is not possible when an implicit connection is desired.
+%If the execution order happens to be reversed, such as in the case of fig.~\ref{fig.simple-reversed}, nothing will be read, and the execution will only happen during $t_1$.
 
-It would also be the most tedious for users if the patch changes often.
-
-The second possibility is in the dependency edge between nodes; this is compatible with all the relationship kinds, implicit or explicit, at the exception of the delayed connection.
-
-Finally, default behaviors can be encoded in any hierarchical unit such as the global scope or each time flow could be set-up with a default connection type.
-
-We propose a default glutton behavior; however usability studies should be led to determine the most user-friendly default behavior.
-
+%\subsection{Parallelization and reduction}
+%In the case where multiple nodes with the same implicit inputs, we 
+%Nodes are parallelized run with the same input environment, and summed:
+%
+%\begin{itemize}
+%	\item $t_0$: $f_1$.
+%	\item $t_1$: $s(f_1, f_2)$ where $s$ is the reduction operation, and $f_1$, $f_2$ are ran with the same input environment.
+%	\item $t_2$: $f_2$. 
+%\end{itemize}
+%
+%Summing operations have to be defined for each of the data types supported by the system.
+%
+%We propose for instance the following operations for music software: 
+%\begin{itemize}
+%  \item For simple parameters such as MIDI control changes or OSC messages: the latest value replaces the previous ones.
+%  \item For audio or media streams, the alternatives are to mix the streams together, or to put new streams in additional channels.
+%  \item For MIDI notes: the notes are played together.
+%\end{itemize}
+%
+%The parallelized execution may happen explicitly or implicitly 
+%
+%\subsection{Replacement}
+%All the nodes are run with the same input environment. 
+%The resulting values put in the environment are those of the latest node executing in the following dependent nodes.
+%    
+%Software authors may still have to execute the previous nodes if they happen to produce side-effects.
+%    
+%\begin{itemize}
+%  \item $t_0$: $f_1$.
+%  \item $t_1$: $f_1$ or $f_2$.
+%  \item $t_2$: $f_2$. 
+%\end{itemize}
+%
+%The replaced execution may happen explicitly or implicitly.
+%    
+%\section{Specifying the relationships}
+%A remaining problem is the specification of the kind of relationship between two ports, and, more precisely, 
+%where this relationship should be specified.
+%
+%The most precise way to set-up dependency-related information would be as an attribute of 
+%the cables connecting two ports. 
+%
+%It is also the only way to set-up a delayed connection, since a buffer may be needed for each connection, but is not possible when an implicit connection is desired.
+%
+%It would also be the most tedious for users if the patch changes often.
+%
+%The second possibility is in the dependency edge between nodes; this is compatible with all the relationship kinds, implicit or explicit, at the exception of the delayed connection.
+%
+%Finally, 
 
 \section{Default behaviors for orders}
 \label{sec.order}
 We assess here the various mechanisms possible to specify the dependencies between nodes of the dataflow.
-Information provided provided in the timeflow can be leveraged to connect the nodes at runtime in a fashion 
+Information provided provided in the temporal graph can be leveraged to connect the nodes at runtime in a fashion 
 that would make sense to composers \& authors.
     
-By default, any non-ordered node would strive to be scheduled at the earliest possible time.
+By default, any node without preceding nodes would strive to be scheduled at the earliest possible time.
     
-Connections between ports imply an ordering between nodes, hence we only consider the ordering between implicitly connected nodes of the dataflow.
+Connections between ports imply a partial ordering between nodes, hence we only consider the ordering between implicitly connected nodes of the dataflow.
     
 \subsection{Manual ordering}
 In this case, the author explicitly specifies an order by setting up an edge between two nodes. 
 This is the slowest process, but which gives the most precise specification.
     
 \subsection{Hierarchical ordering}
-We follow the hierarchical organization of the timeflows~: each time constraint has an ordered list of processes, and each time constraint is itself ordered relative to others in a given timeflow. 
-This gives a natural order between processes, which does not require the composer to manipulate the dataflow unless a specific data connection has to be established.
+We follow the hierarchical organization of the temporal graphs: each time constraint has an ordered list of processes, and each time constraint is itself ordered relative to others in a given temporal graph. 
+This gives an order between processes, which does not require the composer to manipulate the dataflow unless a specific data connection has to be established.
     
 \subsection{Temporal ordering}
 In this case, the temporal order in which objects are executed
@@ -472,17 +536,66 @@ With the OSSIA semantics, this order could change at each run of a score, as sho
     
 %Divide the time in abstract segment according to the activation graph; gives us a set of equations for each variable.
 %\section{Implementation}
+
+\section{Implementation considerations}
+Multiple points discussed in this article can be left to the decision of designers of dataflow systems.
+
+%Finally, we will call developers the persons implementing dataflow-based software and users, authors, or composers the persons using dataflow-based software to implement their own music algorithms.
+\subsection{Compromises in dynamicity}
+A first choice that such a designer ought to make would be the level of dynamicity of the system.
+For instance: would nodes of the dataflow have statically, fixed input and output addresses, or would they be defined and routed dynamically at each tick.
+The first case allows for better performance: more functional dependencies could be checked and set-up statically.
+The second enables new behaviors: for instance, a node could write a value to a random parameter at each tick to create fuzzing effects.
+
+A second choice is the use of scopes and the behavior when a given scope does not have the required value.
+If an input port tries to read from an address \lstinline|/a|, would the implementation allow it to read from the global scope if the value is not available in the local scope?
+It is up to the designer of the software to choose whether a port can work with any permutation of ports: 
+\begin{itemize}
+	\item When connected explicitly,
+	\item With the local scope,
+	\item With the global scope.
+\end{itemize} 
+
+\subsection{Pattern matching}
+More dynamic behaviors could also be achieved by allowing to use patterns instead of addresses in the port definitions.
+
+For instance, instead of accepting data from a single source, a port can specify an input pattern such as: \lstinline|/foo.*/bar/b[a-zA-Z]|, as proposed in the OSC specification.
+
+Upon execution, the input stream of the port would contain the list of values corresponding to the matching addresses.
+
+Given a global environment with the variables: 
+\begin{lstlisting}
+/foo/bar/ba     1.0
+/foo.1/bob/bu   2.0
+/foo.2/bar/be  -1.0
+/foo.42/bar/bo -3.0
+\end{lstlisting}
+
+Such a pattern would yield the tokens $-1.0$ and $-3.0$ at the input of the port matching the pattern.
+
+\subsection{Default behaviors}
+Default behaviors can be encoded in any hierarchical unit; for instance, the global scope. 
+Likewise, each temporal graph could also be set-up with a default connection type.
+
+We propose a default glutton behavior; however usability studies should be made to determine the most user-friendly default.
+
+\subsection{Reference implementation}
+An implementation is being developed as an extension to the i-score software. 
+This implementation uses PureData via libpd to provide function execution with multiple ports
+with primitives useful for musical creation.
+
+\section{Applied example: generative music}
+
 \section{Conclusion}
 Throughout this paper, the effects of adding macro-temporal semantics to dataflows were studied. 
 The first step is to introduce an environment that allows execution of a program to continue if not all the nodes of a dataflow are currently being executed.
 Then, we study the new possibilities offered by the presence of the environment by the different ways to interpret the absence of execution of a node.
 This includes matching nodes together through pattern matching, and distinct policies of execution that can take into account the evolution of the program in time.
 
-An implementation is being developed as an extension to the i-score software. 
-This implementation uses PureData via libpd to provide function execution with multiple ports
-with primitives useful for musical creation.
 
 A further goal for this work is to extend the definition not only to work with a single variable of time, but to any kind of activation mechanism: for instance, evolution of a position in a 3D space, etc.
+
+Multiple dataflows: can be used as distinct variable scopes. Or use temporal graph as hierarchical scoping mechanism. 
 %Additional consideration: see PLOP 2006 article (multi-stream, etc), sample accuracy, etc
     
 %Generalization to not only a single variable of time, but any kind of driving parameters
