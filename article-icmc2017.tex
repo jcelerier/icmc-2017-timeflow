@@ -1,14 +1,13 @@
 \documentclass{article}
 
 \usepackage{icmc2017template}
+\usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage{times}
-\usepackage{ifpdf}
 \usepackage{soul}
 \usepackage{microtype}
 \usepackage{csquotes}
 \usepackage{polyglossia}
-\usepackage{amsmath}
+\setmainfont{Times New Roman}
 
 \setdefaultlanguage{english}
 \usepackage{tikz}
@@ -28,10 +27,15 @@
 \author{Authors redacted}
 \DeclareMathOperator{\commit}{commit}
 \DeclareMathOperator{\pull}{pull}
-
+\usepackage[explicit]{titlesec}
 \lstset{basicstyle=\ttfamily\footnotesize,breaklines=true}
 
 
+\titleformat{name = \section, numberless}[runin]
+{\bfseries}
+{}
+{1em}
+{#1}
 
 \usepackage[
 pdftitle={\papertitle},
@@ -64,28 +68,33 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
 \maketitle
 \capstarttrue
 \begin{abstract}
- % contenu...
+    Numeric musical and artistic creation is in great part based on well-known patcher software: Max/MSP, PureData, OpenMusic, vvvvv\dots 
+    
+    Yet, handling temporal evolutions and structures on large scales remains a central problem: for instance, writing a song with introduction, chorus, verse, chorus, parts in Max presents many hurdles to the composer.    
+    Hence, multiple software have introduced tracks and automations to provide a temporal control of a given set of parameters in a single or even multiple concurrent time-lines.
+    
+    We present an extension to the dataflow paradigm used by patchers that allows to handle the execution of any parts of a computation in time. 
+    That is, instead of sending control messages to existing patchs, they are run in a time-line which orchestrates the data bindings between different parts of the dataflow. 
+    This enables dynamic behaviours when creating temporal compositions. An example is given with Pure Data patches and an i-score scenario.
 \end{abstract}
     
 \section{Introduction}
 This work explores the association of macroscopic temporal semantics with the dataflow graphs generally used in music and signal processing.
     
-We analyze the meanings that can be given to a graphical representation of processes executing in time. 
+We analyze the meanings that can be given to processes executing in time, when these processes have a data dependency and do not execute at exactly the same time.
     
 For instance, given two processes $p_1, p_2$, what can be said of a program where $p_1$ executes from $t=0$ to $t=5$ seconds, and $p_2$ from $t=3$ to $t=6$ when $p_1$ and $p_2$ operate on the same data.
     
 An example would be an audio filter: $p_1$ is a low-pass and $p_2$ a reverb; we want the reverb to activate only after an action of a performer and stop after a few seconds.
     
 The simplest strategy can be to only allow execution when all processes are active and have been given a definite order of execution: in this case the processes will only execute from $t=3$ to $t=5$ and behave like function composition. 
-While safe from the point of view of software execution, we will show that other execution policies leveraging information from the temporal layout of the processes can provide composers with new creative capabilities.
+While safe from the point of view of software execution, we will show that other execution policies leveraging information from the temporal layout of the processes can provide composers with new creative capabilities, through an example that uses Pure Data.
     
-The main problem that arises is that composers may specify relationships between processes, but such processes may not always be active. 
-We start by making the case for an environment associated with the dataflow graph that contains the values of the inputs and outputs.
+An environment associated with the dataflow graph is introduced; it contains the values of the inputs and outputs of the processes in this graph.
 Then, since a graph may not always be fully active, we show that it is also meaningful to have implicit connections between nodes of the graph, that will use the environment.
 This allows dynamic routing of the processes according to their temporal order during execution, and extends routing to pattern-matched elements of the environment instead of single values.
-We enumerate present three different behaviors between the input and output parameters when the nodes are implicitly connected at runtime using the environment: strict, glutton, and delayed. 
-Additionally, when the node are explicitly connected, we introduce a delay mechanism that allows a computation to happen on data previously produced by another node of the graph, instead of reading the current tokens.
-    
+Three different behaviors between the input and output parameters of the dataflow nodes are presented: strict, glutton, and delayed. 
+
 \subsection{Related works}
 There is a long-standing interest in the handling of time in programming languages.
 
@@ -105,9 +114,11 @@ The first relates to the variability on the streams of tokens, while the second 
 Boolean parametric dataflows\cite{bempelis2015boolean} have been proposed to solve dynamicity of topology, by introducing conditionals at the edges.
 
 \subsection{Temporal formalism}
-This work implicitly uses the OSSIA formalism~\cite{celerier2015ossia} to provide primitives relative to the evolution of time: time constraints (horizontal lines), time nodes (vertical lines). 
+This work implicitly uses the OSSIA formalism~\cite{celerier2015ossia} in its examples to provide primitives relative to the evolution of time: time constraints (horizontal lines), time nodes (vertical lines). 
 The elements of its syntax are presented in fig.~\ref{fig.iscore-example}.
-    
+
+It is important to note that any other system of temporal relationships between processes could be used instead.
+
 \begin{figure}[h]
   \centering
   \includegraphics[width=0.35\textwidth]{images/iscore-example.eps}
@@ -117,7 +128,8 @@ The elements of its syntax are presented in fig.~\ref{fig.iscore-example}.
   to the following parts of the score according to an external event.}
   \label{fig.iscore-example}
 \end{figure}
-    
+
+
 \section{Definitions}
 We call process an entity that consists in a function $f$, an associated state, any number of inputs and output ports, and an activation status.
 $f$ has a single argument $t \in \mathbb{R^+}$.
@@ -559,7 +571,7 @@ It is up to the designer of the software to choose whether a port can work with 
 \subsection{Pattern matching}
 More dynamic behaviors could also be achieved by allowing to use patterns instead of addresses in the port definitions.
 
-For instance, instead of accepting data from a single source, a port can specify an input pattern such as: \lstinline|/foo.*/bar/b[a-zA-Z]|, as proposed in the OSC specification.
+For instance, instead of accepting data from a single source, a port can specify an input pattern such as:~\\\lstinline|/foo.*/bar/b[a-zA-Z]|, as proposed in the OSC specification.
 
 Upon execution, the input stream of the port would contain the list of values corresponding to the matching addresses.
 
@@ -580,64 +592,98 @@ Likewise, each temporal graph could also be set-up with a default connection typ
 We propose a default glutton behavior; however usability studies should be made to determine the most user-friendly default.
 
 \subsection{Reference implementation}
-An implementation is being developed as an extension to the i-score software. 
-This implementation uses PureData via libpd to provide function execution with multiple ports
+An implementation is being developed as an extension to the i-score software\footnote{\url{http://www.i-score.org}}. 
+This implementation uses PureData~\cite{puckette1996pure} through libpd~\cite{brinkmann2011embedding} to provide function execution with multiple ports
 with primitives useful for musical creation.
 
 \section{Applied example: generative music}
-We present here an example that leverages patches built with Pure Data\cite{puckette1996pure}.
 \begin{figure}[h]
-	\centering
-	\begin{subfigure}{0.21\textwidth}
-		\includegraphics[scale=0.5]{images/pd-1.png}
-		\caption{$f_1$: generates a random note on each bang}
-	\end{subfigure}
-\begin{subfigure}{0.21\textwidth}
-	\includegraphics[scale=0.5]{images/pd-2.png}
-	\caption{$f_2$: generates another random note on each bang}
-\end{subfigure}
-
-\begin{subfigure}{0.21\textwidth}
-	\includegraphics[scale=0.5]{images/pd-3.png}
-	\caption{$f_3$: synthesizes a note, sets the volume}
-\end{subfigure}
-\begin{subfigure}{0.21\textwidth}
-	\includegraphics[scale=0.5]{images/pd-4.png}
-	\caption{$f_4$: applies an high-pass filter}
-\end{subfigure}
-\begin{subfigure}{0.21\textwidth}
-\includegraphics[scale=0.5]{images/pd-5.png}
-\caption{$f_5$: applies a low-pass filter}
-\end{subfigure}
-\caption{The functions we use in our example, as defined in PureData.}
+    \centering
+    \begin{subfigure}{0.21\textwidth}\centering
+        \includegraphics[scale=0.5]{images/pd-1.png}
+        \caption{$f_1, f'_1$: generates a random note on each bang}
+    \end{subfigure}
+    \begin{subfigure}{0.21\textwidth}\centering
+        \includegraphics[scale=0.5]{images/pd-2.png}
+        \caption{$f_2$: generates another random note on each bang}
+    \end{subfigure}
+    
+    \begin{subfigure}{0.21\textwidth}\centering
+        \includegraphics[scale=0.5]{images/pd-3.png}
+        \caption{$f_3$: synthesizes a note, sets the volume}
+    \end{subfigure}
+    \begin{subfigure}{0.21\textwidth}\centering
+        \includegraphics[scale=0.5]{images/pd-4.png}
+        \caption{$f_4$: applies an high-pass filter}
+    \end{subfigure}
+    \begin{subfigure}{0.21\textwidth}\centering
+        \includegraphics[scale=0.5]{images/pd-5.png}
+        \caption{$f_5, f'_5$: applies a low-pass filter}
+    \end{subfigure}
+    \caption{The functions we use in our example, as defined in PureData.}
+    \label{fig.pdpatches}
 \end{figure}
 
 
 \begin{figure}[h]
-	\centering
-	\includegraphics[scale=0.7]{images/nodes.eps}
-	
-	\caption{The relationships between instances of $f_{1,..5}$ in the program}
+    \centering
+    \includegraphics[scale=0.7]{images/nodes.eps}
+    
+    \caption{The data relationships between instances of $f_{1,..5}$ in the program.}
+    \label{fig.datapatch}
 \end{figure}
 
 \begin{figure}
-	\begin{tikzpicture}
-	\input{scores/score2.tex}
-	\end{tikzpicture}
-	\caption{}
+    \centering
+    \begin{tikzpicture}
+    \input{scores/score2.tex}
+    \end{tikzpicture}
+    \caption{The temporal relationships between instances of $f_{1,..5}$ in the program.}
+    \label{fig.timepatch}
 \end{figure}
+
+We present here an example that leverages patches built with Pure Data\cite{puckette1996pure}.
+Figure~\ref{fig.pdpatches} present the Pd patches used. Fig.~\ref{fig.datapatch} presents the data relationships between the Pd patches, with the mapping of inputs and outputs to addresses of the environment. 
+The inlets and outlets are ordered so that audio ports come first and message ports come afterwards.
+Finally, fig.~\ref{fig.timepatch} presents the temporal score that orchestrates the execution of the Pd patches.
+
+The execution happens as follows: 
+\begin{enumerate}
+    \item For a few milliseconds, nothing happens.
+    \item $f_3$ is started. However, there is a strict dependency between $f_3$ and $f_4$: no sound is produced; $f_3$ is disabled.
+    \item $f_1$ is started. Since $f_3$ is disabled, it writes \lstinline|/note| to the environment.
+    \item $f_1$ stops, and a few milliseconds afterwards, $f_4$ starts, which allows  $f_3$ to execute. $f_3$ uses the last value of \lstinline|/note| that was put in the global scope by $f_1$.
+    $f_3$ fetches the value of \lstinline|/vol| in the environment and $f_4$ fetches the value of \lstinline|/filt| there as well.
+    Notice that $f_3$'s parent time constraint is dashed: it will execute until it is manually stopped.
+    
+    The sound that can be heard is a single tone with some amount of high-pass filtering.
+    \item $f_2$ starts: random notes will be generated and put at the \lstinline|/note| input of $f_3$ directly, bypassing the environment.
+    
+    \item $f_5$ starts: the low-pass filter adds itself after the high-pass filter.
+    \item $f_2$ stops: the sound reverts to a continuous tone (the last that was written, again).
+    \item $f'_1$ starts: tones are generated again, but with a faster rhythm.
+    \item $f_4$ stops: there is no sound anymore due to the strict dependency. $f_5$ applies its low-pass filter to silence.
+    \item $f_5$ stops, and just afterwards $f'5$ starts. Since $f'5$ was in a delayed relationship with $f_4$, the sound produced corresponds to the sound that was heard at the beginning of $f_4$, with both $f_4$'s high pass filtering, and $f'5$'s low-pass filtering.
+\end{enumerate}
 \section{Conclusion}
 Throughout this paper, the effects of adding macro-temporal semantics to dataflows were studied. 
 The first step is to introduce an environment that allows execution of a program to continue if not all the nodes of a dataflow are currently being executed.
 Then, we study the new possibilities offered by the presence of the environment by the different ways to interpret the absence of execution of a node.
 This includes matching nodes together through pattern matching, and distinct policies of execution that can take into account the evolution of the program in time.
 
+Such global environments have been implicitly present in multiple dataflow-based software; however they are not given an explicit existence. For instance, Max/MSP externals generally handle their global state through \lstinline|static| C variables. Making it explicit allows for better understanding of the execution of a program, and may enable further optimization opportunities.
+
+After discussing the various choices left to the implementor, an example leveraging multiple PureData patches scheduled through an i-score score is explained.
 
 A further goal for this work is to extend the definition not only to work with a single variable of time, but to any kind of activation mechanism: for instance, evolution of a position in a 3D space, etc.
 
-Multiple dataflows: can be used as distinct variable scopes. Or use temporal graph as hierarchical scoping mechanism. 
+The paper mostly centered around a single dataflow. A meaning has been proposed for multiple dataflows: they could be used as distinct variable scopes. If the temporal graph has hierarchical features, its use as a scoping mechanism should also be envisioned.
+
+\printbibliography
+
 %Additional consideration: see PLOP 2006 article (multi-stream, etc), sample accuracy, etc
     
 %Generalization to not only a single variable of time, but any kind of driving parameters
-\printbibliography 
+
+
 \end{document}
