@@ -7,6 +7,7 @@
 \usepackage{microtype}
 \usepackage{csquotes}
 \usepackage{polyglossia}
+\usepackage{footmisc}
 \setmainfont{Times New Roman}
 
 \setdefaultlanguage{english}
@@ -83,17 +84,27 @@ This work explores the association of macroscopic temporal semantics with the da
     
 We analyze the meanings that can be given to processes executing in time, when these processes have a data dependency and do not execute at exactly the same time.
     
-For instance, given two processes $p_1, p_2$, what can be said of a program where $p_1$ executes from $t=0$ to $t=5$ seconds, and $p_2$ from $t=3$ to $t=6$ when $p_1$ and $p_2$ operate on the same data.
+For instance, given two processes $p_1, p_2$, what can be said of a program where $p_1$ executes from $t=0$ to $t=5$ seconds, and $p_2$ from $t=3$ to $t=6$ when $p_1$ and $p_2$ operate on the same data?
     
 An example would be an audio filter: $p_1$ is a low-pass and $p_2$ a reverb; we want the reverb to activate only after an action of a performer and stop after a few seconds.
     
-The simplest strategy can be to only allow execution when all processes are active and have been given a definite order of execution: in this case the processes will only execute from $t=3$ to $t=5$ and behave like function composition. 
+The simplest strategy can be to only allow execution when all processes are active and have been given a definite order of execution: in this case the overall program will only execute during the intersection of the activation of $p_1$ and $p_2$, which goes from $t=3$ to $t=5$. 
 While safe from the point of view of software execution, we will show that other execution policies leveraging information from the temporal layout of the processes can provide composers with new creative capabilities, through an example that uses Pure Data.
     
 An environment associated with the dataflow graph is introduced; it contains the values of the inputs and outputs of the processes in this graph.
 Then, since a graph may not always be fully active, we show that it is also meaningful to have implicit connections between nodes of the graph, that will use the environment.
 This allows dynamic routing of the processes according to their temporal order during execution, and extends routing to pattern-matched elements of the environment instead of single values.
 Three different behaviors between the input and output parameters of the dataflow nodes are presented: strict, glutton, and delayed. 
+
+\begin{figure} [h]
+	\centering
+	\includegraphics[width=0.35\textwidth]{images/iscore-example.eps}
+	\caption{Part of an OSSIA scenario, showcasing the temporal syntax used. 
+		A full horizontal line means that the time must not be interrupted, 
+		while a dashed horizontal line means that the time of this time constraint can be interrupted to proceed 
+		to the following parts of the score according to an external event.}
+	\label{fig.iscore-example}
+\end{figure}
 
 \subsection{Related works}
 There is a long-standing interest in the handling of time in programming languages.
@@ -114,67 +125,13 @@ The first relates to the variability on the streams of tokens, while the second 
 Boolean parametric dataflows\cite{bempelis2015boolean} have been proposed to solve dynamicity of topology, by introducing conditionals at the edges.
 
 \subsection{Temporal formalism}
+
 This work implicitly uses the OSSIA formalism~\cite{celerier2015ossia} in its examples to provide primitives relative to the evolution of time: time constraints (horizontal lines), time nodes (vertical lines). 
 The elements of its syntax are presented in fig.~\ref{fig.iscore-example}.
 
 It is important to note that any other system of temporal relationships between processes could be used instead.
 
-\begin{figure}[h]
-  \centering
-  \includegraphics[width=0.35\textwidth]{images/iscore-example.eps}
-  \caption{Part of an OSSIA scenario, showcasing the temporal syntax used. 
-    A full horizontal line means that the time must not be interrupted, 
-    while a dashed horizontal line means that the time of this time constraint can be interrupted to proceed 
-  to the following parts of the score according to an external event.}
-  \label{fig.iscore-example}
-\end{figure}
-
-
 \section{Definitions}
-We call process an entity that consists in a function $f$, an associated state, any number of inputs and output ports, and an activation status.
-$f$ has a single argument $t \in \mathbb{R^+}$.
-The execution of $f$ may read any number of tokens from the inputs and write any number of tokens to the outputs.
-    
-The function associated to an inactive process may not be executed.
-
-We rely on two families of graphs for defining the execution of a program:
-    
-\begin{itemize}
-  \item Synchronous dataflows between processes: input and output ports can be connected together to enforce data dependencies.
-  \item Temporal graphs, based on the OSSIA formalism: $G_t(V_t, E_t)$ where $V_t$ is the set of time nodes and $E_t$ is the set of time constraints in a score. 
-  For coherency, we call these graphs temporal graphs.
-\end{itemize}
-
-In the following, we consider a program consisting in a dataflow, and a temporal graph.
-    
-There may be more than a single temporal graph: they are defined as processes themselves, which provides them with time information.
-A temporal graph does not have inputs or outputs.
-    
-Each time constraint has an associated set of references to processes.
-A process may only be executed if it is referenced at least once in a time constraint, 
-at the exception of a special ``main'' process that acts as an entrypoint.
-    
-The execution of a program is synchronous and driven by a scheduler.
-At each tick, the state of each temporal graph is updated with the following informations:
-    
-\begin{itemize}
-  \item Which processes are currently activated.
-  \item For how long these processes have been activated.
-\end{itemize}
-
-This is done according to the various events that occur and may change the order of activation of processes.
-
-Processes are then sorted according to their dependencies and activation status, and finally executed.
-% In a given tick, every active process will be executed. ?
-%Event-driven vs time-driven vs sound-driven ; each node has a "driver" port which is the time or the sound. (Do like LV2: pass empty buffers). Pb: multi-rate ... voir méthode pour passer de multi-rate à single rate dans PLOP2006 et Signal Flow Graphs and Data Flow Graphs (3.2, 3.3), dans Handbook of Signal Processing (First Edition)
-    
-% Pour thèse: essayer de spécifier l'ensemble des cas possible / configuraitons d'activation de manière statique à partir d'un scénario donné, même si c'est exponentiel..
-
-%\subsection{Why multiple graphs ?}
-%\subsection{Hierarchy}
-    
-Throughout this paper, we will use the execution traces in fig.~\ref{fig.simple} and fig.~\ref{fig.simple-reversed} as running example, as well as the relationships between $f_1$ and $f_2$ present in fig.~\ref{fig.simple-dataflow}. 
-    
 \begin{figure}[h]
 	\centering
 	\begin{subfigure}{0.15\textwidth}\centering
@@ -202,17 +159,61 @@ Throughout this paper, we will use the execution traces in fig.~\ref{fig.simple}
 	\label{fig.simple-dataflow}
 \end{figure}
 
+We call process an entity that consists in a function $f$, an associated state, any number of inputs and output ports, and an activation status.
+$f$ has a single argument $t \in \mathbb{R^+}$.
+The execution of $f$ may read any number of tokens from the inputs and write any number of tokens to the outputs.
+    
+The function associated to an inactive process may not be executed.
+
+We rely on two families of graphs for defining the execution of a program:
+    
+\begin{itemize}
+  \item Synchronous dataflow graphs between processes:~\\$G_d(V_d, E_d)$ where $V_d$ is the set of processes and $E_d$ the set of data bindings between processes.
+	
+  \item Temporal graphs, based on the OSSIA formalism: $G_t(V_t, E_t)$ where $V_t$ is the set of time nodes and $E_t$ is the set of time constraints in a score. 
+  For coherency, we call these graphs temporal graphs.
+\end{itemize}
+
+In the following, we consider a program consisting in a dataflow, and a temporal graph.
+    
+A program may consist in more than a single temporal graph: they are defined as processes themselves, which provides them with time information.
+    
+Each time constraint has an associated set of references to processes.
+A process may only be executed if it is referenced at least once in a time constraint, 
+at the exception of a special ``main'' process that acts as an entrypoint.
+    
+The execution of a program is synchronous and driven by a scheduler.
+At each tick, the state of each temporal graph is updated with the following informations:
+    
+\begin{itemize}
+  \item Which processes are currently activated.
+  \item For how long these processes have been activated.
+\end{itemize}
+
+This is done according to the various events that occur and may change the order of activation of processes.
+
+Processes are then sorted according to their dependencies and activation status, and finally executed.
+% In a given tick, every active process will be executed. ?
+%Event-driven vs time-driven vs sound-driven ; each node has a "driver" port which is the time or the sound. (Do like LV2: pass empty buffers). Pb: multi-rate ... voir méthode pour passer de multi-rate à single rate dans PLOP2006 et Signal Flow Graphs and Data Flow Graphs (3.2, 3.3), dans Handbook of Signal Processing (First Edition)
+    
+% Pour thèse: essayer de spécifier l'ensemble des cas possible / configuraitons d'activation de manière statique à partir d'un scénario donné, même si c'est exponentiel..
+
+%\subsection{Why multiple graphs ?}
+%\subsection{Hierarchy}
+    
+Throughout this paper, we will use the execution traces in fig.~\ref{fig.simple} and fig.~\ref{fig.simple-reversed} as running example, as well as the relationships between $f_1$ and $f_2$ present in fig.~\ref{fig.simple-dataflow}. 
+    
 \begin{figure}[h]
 
 \centering
 \begin{tikzpicture}[]
 \input{scores/score.tex}
 \end{tikzpicture}
-\caption{The matching temporal graph}
+\caption{The example temporal graph we use: both $f_1$ and $f_2$ can start at any time. $f_1$ and $f_2$ both have a given, finite duration.}
 \label{fig.tgraph}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[htp]
 \centering
 \begin{subfigure}{0.22\textwidth}
   \centering
@@ -325,6 +326,7 @@ This mechanism allows for new behaviors during the creation of a dataflow progra
 \section{Relationships}
 \label{sec.relationships}
 We are interested in the relationships between nodes of the dataflow graph when they produce compatible tokens, whether the production is specified implicitly or explicitly, and when taking into account deactivated nodes.
+That is, given a node of the dataflow executing and producing tokens, we must define which following nodes, if any, will receive the tokens and when will they execute.
     
 We propose three relationships: strict, glutton, and delayed.
 
@@ -385,9 +387,9 @@ A connection between an output and an input is delayed through bufferisation in 
 The delayed connection can behave in two ways:
 \begin{itemize}
   \item Readers of the buffer always start from the same point: the beginning of the previous function in the callback chain. 
-  The frame pointer would be located in each delayed connection.
+  The frame pointer would be located in each delayed connection, and would not be shared between processes.
   \item Readers of the buffer continue from the latest read position. 
-  The frame pointer would be located in the source port.
+  The frame pointer would be located in the source port, and would be shared across all processes reading from it.
 
   This behavior can be useful when multiple functions should apply successively to a single buffer, as in fig.~\ref{fig.delay2}.
   However, it would also create concurrent accesses problems if two nodes happened to read an output at the same time.
@@ -397,11 +399,11 @@ The delayed connection can behave in two ways:
 
 Arumi presents in~\cite{arumi2006dataflow} the advantages and drawbacks of storing tokens at the output or input ports.
 
-This relationship has to be specified explicitly to allow for the tokens to be bufferised.
+This relationship has to be specified explicitly to allow for the tokens to be buffered.
     
 If we have a delay connection from $f_1$ to $f_2$, the first call to $f_2$ will use the first value that was produced by $f_1$.
 
-We define also define a strictness level for the delayed connection. 
+We also define a strictness level for the delayed connection. 
 In the strict case, a node will only be able to execute if the source has produced enough tokens.
 
 That is, in fig.~\ref{fig.delay}, $f_2$ would only execute during $t_1$.
@@ -425,7 +427,7 @@ That is, in fig.~\ref{fig.delay}, $f_2$ would only execute during $t_1$.
 \node (t2) at (4, -3.45) {\footnotesize $t_1$};
 \node (t3) at (6.5, -3.45) {\footnotesize $t_2$};
 \end{tikzpicture}
-\caption{Another execution trace. $f_2$'s input corresponds to $f_1$'s output, delayed: this creates a causality problem.}
+\caption{Another execution trace, stemming from a different score than the one presented in fig.~\ref{fig.tgraph}. $f_2$'s input corresponds to $f_1$'s output, delayed: this creates a causality problem. }
 \label{fig.delay}
 \end{figure}
 
@@ -498,7 +500,7 @@ That is, in fig.~\ref{fig.delay}, $f_2$ would only execute during $t_1$.
 \section{Default behaviors for orders}
 \label{sec.order}
 We assess here the various mechanisms possible to specify the dependencies between nodes of the dataflow.
-Information provided provided in the temporal graph can be leveraged to connect the nodes at runtime in a fashion 
+Information provided in the temporal graph can be leveraged to connect the nodes at runtime in a fashion 
 that would make sense to composers \& authors.
     
 By default, any node without preceding nodes would strive to be scheduled at the earliest possible time.
@@ -575,14 +577,15 @@ For instance, instead of accepting data from a single source, a port can specify
 
 Upon execution, the input stream of the port would contain the list of values corresponding to the matching addresses.
 
-Given a global environment with the variables: 
+Given a global environment with the variables:~\\
+\begin{tabular}{c}
 \begin{lstlisting}
 /foo/bar/ba     1.0
 /foo.1/bob/bu   2.0
 /foo.2/bar/be  -1.0
 /foo.42/bar/bo -3.0
 \end{lstlisting}
-
+\end{tabular}~\\~\\
 Such a pattern would yield the tokens $-1.0$ and $-3.0$ at the input of the port matching the pattern.
 
 \subsection{Default behaviors}
@@ -601,26 +604,27 @@ with primitives useful for musical creation.
     \centering
     \begin{subfigure}{0.21\textwidth}\centering
         \includegraphics[scale=0.5]{images/pd-1.png}
-        \caption{$f_1, f'_1$: generates a random note on each bang}
+        \caption{$f_1, f'_1$: note generator.}
     \end{subfigure}
     \begin{subfigure}{0.21\textwidth}\centering
         \includegraphics[scale=0.5]{images/pd-2.png}
-        \caption{$f_2$: generates another random note on each bang}
+        \caption{$f_2$: note generator, at a lower tempo.}
     \end{subfigure}
     
     \begin{subfigure}{0.21\textwidth}\centering
         \includegraphics[scale=0.5]{images/pd-3.png}
-        \caption{$f_3$: synthesizes a note, sets the volume}
+        \caption{$f_3$: synthesizes the input note, sets the volume.}
     \end{subfigure}
+
     \begin{subfigure}{0.21\textwidth}\centering
         \includegraphics[scale=0.5]{images/pd-4.png}
-        \caption{$f_4$: applies an high-pass filter}
+        \caption{$f_4$: high-pass filter.}
     \end{subfigure}
     \begin{subfigure}{0.21\textwidth}\centering
         \includegraphics[scale=0.5]{images/pd-5.png}
-        \caption{$f_5, f'_5$: applies a low-pass filter}
+        \caption{$f_5, f'_5$: low-pass filter.}
     \end{subfigure}
-    \caption{The functions we use in our example, as defined in PureData.}
+    \caption{The functions we use in our example, as defined in Pure Data.}
     \label{fig.pdpatches}
 \end{figure}
 
@@ -629,7 +633,7 @@ with primitives useful for musical creation.
     \centering
     \includegraphics[scale=0.7]{images/nodes.eps}
     
-    \caption{The data relationships between instances of $f_{1,..5}$ in the program.}
+    \caption{The dataflow relationships between instances of $f_{1,..5}$ in the program. The global environment contains variables for \lstinline|/vol| and \lstinline|/filt| when the execution starts.}
     \label{fig.datapatch}
 \end{figure}
 
@@ -657,11 +661,11 @@ The execution happens as follows:
     Notice that $f_3$'s parent time constraint is dashed: it will execute until it is manually stopped.
     
     The sound that can be heard is a single tone with some amount of high-pass filtering.
-    \item $f_2$ starts: random notes will be generated and put at the \lstinline|/note| input of $f_3$ directly, bypassing the environment.
+    \item $f_2$ starts: random notes will be generated at a lower tempo and put at the \lstinline|/note| input of $f_3$ directly, bypassing the environment.
     
     \item $f_5$ starts: the low-pass filter adds itself after the high-pass filter.
     \item $f_2$ stops: the sound reverts to a continuous tone (the last that was written, again).
-    \item $f'_1$ starts: tones are generated again, but with a faster rhythm.
+    \item $f'_1$ starts: tones are generated again, but with a faster tempo.
     \item $f_4$ stops: there is no sound anymore due to the strict dependency. $f_5$ applies its low-pass filter to silence.
     \item $f_5$ stops, and just afterwards $f'5$ starts. Since $f'5$ was in a delayed relationship with $f_4$, the sound produced corresponds to the sound that was heard at the beginning of $f_4$, with both $f_4$'s high pass filtering, and $f'5$'s low-pass filtering.
 \end{enumerate}
