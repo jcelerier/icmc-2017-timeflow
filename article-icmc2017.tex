@@ -22,10 +22,17 @@
 \addbibresource{biblio.bib}
 
 \def\papertitle{Extending dataflows with temporal graphs}
-\def\firstauthor{First Author}
-\def\secondauthor{Second Author}
-\def\thirdauthor{Third Author}
-\author{Authors redacted}
+\def\firstauthor{Jean-Michaël Celerier}
+\def\secondauthor{Myriam Desainte-Catherine}
+\def\thirdauthor{Jean-Michel Couturier}
+
+\threeauthors
+{0.5in}
+{\firstauthor} {LaBRI, Blue Yeti \\
+    Univ. Bordeaux, LaBRI, UMR 5800, ~\\ F-33400 Talence, France. \\  Blue Yeti, F-17110 France. \\ jcelerie@labri.fr}
+{\secondauthor} {LaBRI, CNRS \\ Univ. Bordeaux, LaBRI, UMR 5800, ~\\ F-33400 Talence, France. \\ CNRS, LaBRI, UMR 5800, ~\\F-33400 Talence, France. \\  INRIA, F-33400 Talence, France. \\ myriam@labri.fr}
+{\thirdauthor} {Blue Yeti, F-17110 France. \\ jmc@blueyeti.fr}
+
 \DeclareMathOperator{\commit}{commit}
 \DeclareMathOperator{\pull}{pull}
 \usepackage[explicit]{titlesec}
@@ -64,16 +71,18 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
 \title{\papertitle}
 
 %%%%% TODO pour review
-%% Expliquer que ce n'est pas qu'un mécanisme pour patcher Pd; à venir: objets de i-score.
+%% Ok: Parler de Bach et du truc du mec de l'IRCAM (dynamic patching en lisp)
+%% Ok: Expliquer que ce n'est pas qu'un mécanisme pour patcher Pd; à venir: objets de i-score.
 %% Présenter ça comme la fusion du modèle flot de données et du modèle séquenceur comme dans Ableton + Max For Live
 %% Différence avec patching dynamique: l'agencement temporel des objets entre eux peut être statique.
 %% Expliquer les raisons: 
 %% Mettre accent sur aspects temporels
-%% Expliquer qu'on présente un paradigme, qu'il est implémenté à bas niveau dans la libossia et à haut niveau dans i-score (dont l'intégration avec Pd)
-%% Accentuer le fait qu'il n'y ait pas besoin de coder
-%% Définir la notion de dynamicité utilisée.
-%% "Any other system of temporal relationships" : donner examples. Par ex. Antescofo, etc ?
-%% Expliquer implémentation: mettre capture d'écran ?
+%% Ok:  Expliquer qu'on présente un paradigme, qu'il est implémenté à bas niveau dans la libossia et à haut niveau dans i-score (dont l'intégration avec Pd)
+%% Bof: Accentuer le fait qu'il n'y ait pas besoin de coder
+%% Bof: Définir la notion de dynamicité utilisée.
+%% Bof: "Any other system of temporal relationships" : donner examples. Par ex. Antescofo, etc ?
+%% Ok: Expliquer implémentation: mettre capture d'écran ?
+
 %% User evaluation... bof
 \begin{document}
     
@@ -119,13 +128,22 @@ Three different behaviors between the input and output parameters of the dataflo
 \end{figure}
 
 \subsection{Related works}
-There is a long-standing interest in the handling of time in programming languages.
+There is a long-standing interest in the handling of time in programming languages, which is intrinsically linked to how the language handles dynamicity.
 
 PEARL90\cite{halang2001safe}\footnote{Not to be mistaken with the Perl language commonly used for text processing} provides temporal primitives allowing for instance to perform loops at a given rate for a given amount of time.
 More recently, Céu has been introduced as a synchronous language with temporal operators, and applications to multimedia\cite{Santos:2016:CLI:2976796.2976856}.
 
 OpenMusic is a visual environment which allows to write music by functional composition.
 It has been recently extended with timed sequences allowing to specify evolutions of parameters in time\cite{garcia:hal-01484077}.
+
+Likewise, the Bach library for Max~\cite{agostini2015max} allows to define temporal variations of parameters during the playing of a note by with the mechanism of slots.
+The processes controlled by such parameters are then available to use in the Max patch.
+
+The Max for Live extension to Ableton Live allows to embed Max patches in the Ableton Live sequencer. 
+Through the API provided, one can control the execution of various elements of the sequencer in Max; automations in Live can also be used to send data to Max patches at a given time.
+
+A method for dynamic patching of Max abstractions based on CommmonLisp has been proposed by Thomas Hummel\cite{hummel1994common} to reduce resource usage by enabling and disabling sub-patches at different points in the execution of a program.
+This has the advantage of saving computing power for the active elements of the score.
 
 Dataflows and especially synchronous dataflows have seen tremendous usage in the music and signal processing community. 
 A list of patterns commonly used when developing dataflow-based music software is presented in~\cite{arumi2006dataflow}.
@@ -606,13 +624,7 @@ Likewise, each temporal graph could also be set-up with a default connection typ
 
 We propose a default glutton behavior; however usability studies should be made to determine the most user-friendly default.
 
-\subsection{Reference implementation}
-An implementation is being developed as an extension to the i-score software\footnote{\url{http://www.i-score.org}}. 
-This implementation uses PureData~\cite{puckette1996pure} through libpd~\cite{brinkmann2011embedding} to provide function execution with multiple ports
-with primitives useful for musical creation.
-
-\section{Applied example: generative music}
-\begin{figure}[h]
+\begin{figure}
     \centering
     \begin{subfigure}{0.21\textwidth}\centering
         \includegraphics[scale=0.5]{images/pd-1.png}
@@ -627,7 +639,7 @@ with primitives useful for musical creation.
         \includegraphics[scale=0.5]{images/pd-3.png}
         \caption{$f_3$: synthesizes the input note, sets the volume.}
     \end{subfigure}
-
+    
     \begin{subfigure}{0.21\textwidth}\centering
         \includegraphics[scale=0.5]{images/pd-4.png}
         \caption{$f_4$: high-pass filter.}
@@ -640,15 +652,27 @@ with primitives useful for musical creation.
     \label{fig.pdpatches}
 \end{figure}
 
+\subsection{Reference implementation}
+An implementation is being developed as an extension to the OSSIA library\footnote{\url{https://github.com/OSSIA/libossia}} and i-score software\footnote{\url{http://www.i-score.org}}. 
+This implementation uses PureData~\cite{puckette1996pure} through libpd~\cite{brinkmann2011embedding} to provide function execution with multiple ports with primitives useful for musical creation. 
+As such, it allows to work with audio, midi, and messages.
 
-\begin{figure}[h]
+The C++ implementation of the execution algorithm itself, provided in the OSSIA library is not tied in any way to PureData or any other environment: PureData is used as an example of implementation of a node to leverage an easy and well-known method to produce generators and filters with different kinds of inputs and outputs, which allows to cover the whole set of features.
+Other nodes can be implemented through inheritance of a set of C++ classes.
+As such, the processes currently available in i-score (automations, Javascript code, MIDI piano roll) and in i-score-audio (sound file reading, Faust and LV2 effects) are being ported to this new execution model.
+
+In terms of user interface, PureData patches appear as nodes with their inputs and outputs in i-score.
+There are two views: the main view, temporal and hierarchical, which allows to position the nodes in time, draw automations, etc., and the patching view which allows to connect nodes together and set the relationship types.
+The temporal view instead has easily accessible text fields that allow setting input and output addresses for each port.
+
+\section{Applied example: generative music}
+\begin{figure}
     \centering
     \includegraphics[scale=0.7]{images/nodes.eps}
     
     \caption{The dataflow relationships between instances of $f_{1,..5}$ in the program. The global environment contains variables for \lstinline|/vol| and \lstinline|/filt| when the execution starts.}
     \label{fig.datapatch}
-\end{figure}
-
+\end{figure}~
 \begin{figure}
     \centering
     \begin{tikzpicture}
@@ -687,14 +711,14 @@ The first step is to introduce an environment that allows execution of a program
 Then, we study the new possibilities offered by the presence of the environment by the different ways to interpret the absence of execution of a node.
 This includes matching nodes together through pattern matching, and distinct policies of execution that can take into account the evolution of the program in time.
 
-Such global environments have been implicitly present in multiple dataflow-based software; however they are not given an explicit existence. For instance, Max/MSP externals generally handle their global state through \lstinline|static| C variables. Making it explicit allows for better understanding of the execution of a program, and may enable further optimization opportunities.
+Such global environments have been implicitly present in multiple dataflow-based software; however they are not given an explicit existence. For instance, Max externals generally handle their global state through \lstinline|static| C variables. Making it explicit allows for better understanding of the execution of a program, and may enable further optimization opportunities.
 
 After discussing the various choices left to the implementor, an example leveraging multiple PureData patches scheduled through an i-score score is explained.
 
 A further goal for this work is to extend the definition not only to work with a single variable of time, but to any kind of activation mechanism: for instance, evolution of a position in a 3D space, etc.
 
 The paper mostly centered around a single dataflow. A meaning has been proposed for multiple dataflows: they could be used as distinct variable scopes. If the temporal graph has hierarchical features, its use as a scoping mechanism should also be envisioned.
-
+% TODO video / shader
 \printbibliography
 
 %Additional consideration: see PLOP 2006 article (multi-stream, etc), sample accuracy, etc
