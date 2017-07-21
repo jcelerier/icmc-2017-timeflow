@@ -459,8 +459,7 @@ That is, in fig.~\ref{fig.delay}, $f_2$ would only execute during $t_1$.
 \end{tikzpicture}
 \caption{Another execution trace, stemming from a different score than the one presented in fig.~\ref{fig.tgraph}. $f_2$'s input corresponds to $f_1$'s output, delayed: this creates a causality problem. }
 \label{fig.delay}
-\end{figure}
-
+\end{figure}\vspace{-5mm}
 \begin{figure}[h]
 	\centering
 	\begin{tikzpicture}[scale=0.45]
@@ -473,7 +472,7 @@ That is, in fig.~\ref{fig.delay}, $f_2$ would only execute during $t_1$.
 	\caption{$f_2$, $f_3$ and $f_4$ read from $f_1$ with a delayed connection.}
 	\label{fig.delay2}
 \end{figure}
-
+\vspace{-5mm}
 
 %If the execution order happens to be reversed, such as in the case of fig.~\ref{fig.simple-reversed}, nothing will be read, and the execution will only happen during $t_1$.
 
@@ -657,7 +656,7 @@ An implementation is being developed as an extension to the OSSIA library\footno
 This implementation uses PureData~\cite{puckette1996pure} through libpd~\cite{brinkmann2011embedding} to provide function execution with multiple ports with primitives useful for musical creation. 
 As such, it allows to work with audio, midi, and messages.
 
-The C++ implementation of the execution algorithm itself, provided in the OSSIA library is not tied in any way to PureData or any other environment: PureData is used as an example of implementation of a node to leverage an easy and well-known method to produce generators and filters with different kinds of inputs and outputs, which allows to cover the whole set of features.
+The C++ implementation of the execution algorithm, provided in the OSSIA library, is not tied in any way to PureData or any other environment: PureData is used as an example of implementation of a node to leverage an easy and well-known method to produce generators and filters with different kinds of inputs and outputs, which allows to cover the whole set of features.
 Other nodes can be implemented through inheritance of a set of C++ classes.
 As such, the processes currently available in i-score (automations, Javascript code, MIDI piano roll) and in i-score-audio (sound file reading, Faust and LV2 effects) are being ported to this new execution model.
 
@@ -670,7 +669,7 @@ The temporal view instead has easily accessible text fields that allow setting i
     \centering
     \includegraphics[scale=0.7]{images/nodes.eps}
     
-    \caption{The dataflow relationships between instances of $f_{1,..5}$ in the program. The global environment contains variables for \lstinline|/vol| and \lstinline|/filt| when the execution starts.}
+    \caption{The dataflow relationships between instances of $f_{1,..5}$ in the program. The global environment contains variables for \lstinline|/vol| and \lstinline|/filt| when the execution starts. A PureData patch with similar semantics would use additionally \lstinline|throw~, catch~, send, receive, delwrite~, delread~,tabwrite~, tabread~| between nodes, and UDP \& OSC receivers and senders to read and write from the environment.}
     \label{fig.datapatch}
 \end{figure}~
 \begin{figure}
