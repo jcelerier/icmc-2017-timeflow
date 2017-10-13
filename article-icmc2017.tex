@@ -90,7 +90,7 @@ pdfstartview=XYZ % start with zoom=100% instead of full screen;
 \maketitle
 \capstarttrue
 \begin{abstract}
-    Numeric musical and artistic creation is in great part based on well-known patcher softwares: Max/MSP, PureData, OpenMusic, vvvv\dots 
+    Numeric musical and artistic creation is in great part based on well-known patcher softwares: Max, PureData, OpenMusic, vvvv\dots 
     
     Yet, handling temporal evolutions and structures on large scales remains a central problem: for instance, writing a song with introduction, chorus, verse, chorus, parts in Max presents many hurdles to the composer.    
     Hence, multiple software have introduced tracks and automations to provide a temporal control of a given set of parameters in a single or even multiple concurrent time-lines.
@@ -142,7 +142,7 @@ The processes controlled by such parameters are then available to use in the Max
 The Max for Live extension to Ableton Live allows to embed Max patches in the Ableton Live sequencer. 
 Through the API provided, one can control the execution of various elements of the sequencer in Max; automations in Live can also be used to send data to Max patches at a given time.
 
-A method for dynamic patching of Max abstractions based on CommmonLisp has been proposed by Thomas Hummel\cite{hummel1994common} to reduce resource usage by enabling and disabling sub-patches at different points in the execution of a program.
+A method for dynamic patching of Max abstractions based on CommonLisp has been proposed by Thomas Hummel\cite{hummel1994common} to reduce resource usage by enabling and disabling sub-patches at different points in the execution of a program.
 This has the advantage of saving computing power for the active elements of the score.
 
 Dataflows and especially synchronous dataflows have seen tremendous usage in the music and signal processing community. 
@@ -322,7 +322,7 @@ During a tick, ports have access to three sets of values, corresponding to scope
         Section~\ref{sec.relationships} presents the various policies that nodes can leverage to use these values. 
         The local scope is cleared at the beginning of a tick. 
         The values written to it are committed to the global environment at the end of the tick.}
-  \item{Connection scope: the explicit scope between two ports; the data flowing from one out port can only go to input ports it is connected to. This is the explicit case.}
+  \item{Connection scope: the explicit scope between two ports; the data flowing from one output port can only go to input ports it is connected to. This is the explicit case.}
 \end{itemize}
 
 For a given execution following fig.~\ref{fig.f1tof2}, the evolution of such parameters would behave as in table~\ref{tbl.evolution}.
